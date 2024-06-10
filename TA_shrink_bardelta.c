@@ -43,9 +43,6 @@ int i_tilde=I_TILDE;
 #define TRIALS 10      //nbr of runs (mean and max will be calculated), default value
 int trials=TRIALS;
 
-#ifndef VERSION
-#define VERSION 0
-#endif
 
 // global variables to store info about pointset
 
@@ -67,9 +64,7 @@ double best_of_rounded_bardelta(int *xn_minus, int *xn_extraminus, int *xc_index
   double fxc;  
   int j, d=n_dimensions;
   int use_extraminus=0;
-#if (VERSION == 1) || (VERSION == 2)
   int xn_minus_snap[d], xn_extraminus_snap[d];
-#endif
   for (j=0; j<d; j++)
     if (xn_minus[j] != xn_extraminus[j]) {
       use_extraminus=1;
@@ -77,12 +72,6 @@ double best_of_rounded_bardelta(int *xn_minus, int *xn_extraminus, int *xc_index
     }
 
   // Growing, shrinking.
-#if (VERSION == 3)
-  // SNAPUPDATE
-  snap_box(xn_minus);
-  if (use_extraminus)
-    snap_box(xn_extraminus);
-#elif (VERSION == 1) || (VERSION == 2)
   // Grower, shrinker that copy the point
   for (j=0; j<d; j++)
     xn_minus_snap[j]=xn_minus[j];
@@ -92,47 +81,15 @@ double best_of_rounded_bardelta(int *xn_minus, int *xn_extraminus, int *xc_index
       xn_extraminus_snap[j]=xn_extraminus[j];
     snap_box(xn_extraminus_snap);
   }
-#endif
 
-  // For version 1: "private update"
-#if (VERSION == 1)
-  fxc = get_bar_delta(xn_minus_snap);
-  if (use_extraminus) {
-    fxn_extraminus=get_bar_delta(xn_extraminus_snap);
-    fxc=max(fxc, fxn_extraminus);
-  }
-#ifdef PRINT_UPDATE_CANDIDATES
-  fprintf(stderr, "PRIVATE candidate %g (vs %g)\n",
-	  fxc, real_max_discr);
-#endif
-  if (fxc > real_max_discr) {
-    real_max_discr = fxc;
-    real_when = current_iteration;
-#ifdef PRINT_ALL_UPDATES
-    fprintf(stderr, "Secret update at %d to %g\n",
-	    current_iteration, fxc);
-#endif
-  }
-#endif
-  // Ends "private update" block
 
   // Now, create the official numbers.
-#if (VERSION == 2)
   // official update from modified points
   fxc = get_bar_delta(xn_minus_snap);
   if (use_extraminus) {
     fxn_extraminus=get_bar_delta(xn_extraminus_snap);
     fxc=max(fxc, fxn_extraminus);
   }
-#else
-  // versions 0,3 both compute from the point now given by xn_*
-  // version 1 officially reports this as well
-  fxc = get_bar_delta(xn_minus);
-  if (use_extraminus) {
-    fxn_extraminus=get_bar_delta(xn_extraminus);
-    fxc=max(fxc, fxn_extraminus);
-  }
-#endif
 
   // Remains only to copy the winning point to output variable xc_index.
   if (use_extraminus && (fxn_extraminus >= fxc)) {

@@ -43,9 +43,6 @@ int i_tilde=I_TILDE;
 #define TRIALS 10      //nbr of runs (mean and max will be calculated), default value
 int trials=TRIALS;
 
-#ifndef VERSION
-#define VERSION 0
-#endif
 
 // global variables to store info about pointset
 
@@ -64,50 +61,18 @@ double best_of_rounded_delta(int *xn_plus)
 {
   double fxc;  
   int j, d=n_dimensions;
-#if (VERSION == 1) || (VERSION == 2)
   int xn_plus_grow[d];
-#endif
 
   // Growing, shrinking.
-#if (VERSION == 3)
-  // SNAPUPDATE
-  grow_box_randomly(xn_plus);
-#elif (VERSION == 1) || (VERSION == 2)
   // Grower, shrinker that copy the point
   for (j=0; j<d; j++)
     xn_plus_grow[j]=xn_plus[j];
   grow_box_randomly(xn_plus_grow);
-#endif
 
-  // For version 1: "private update"
-#if (VERSION == 1)
-  fxc = get_delta(xn_plus_grow);
-#ifdef PRINT_UPDATE_CANDIDATES
-  fprintf(stderr, "PRIVATE candidate %g (vs %g)\n",
-	  fxc, real_max_discr);
-#endif
-  if (fxc > real_max_discr) {
-    real_max_discr = fxc;
-    real_when = current_iteration;
-#ifdef PRINT_ALL_UPDATES
-    fprintf(stderr, "Secret update at %d to %g\n",
-	    current_iteration, fxc);
-#endif
-  }
-#endif
-  // Ends "private update" block
 
   // Now, create the official numbers.
-#if (VERSION == 2)
   // official update from modified points
   fxc = get_delta(xn_plus_grow);
-#else
-  // versions 0,3 both compute from the point now given by xn_*
-  // version 1 officially reports this as well
-  fxc = get_delta(xn_plus);
-#endif
-
-  // In delta_only mode: don't copy
 
   return fxc;
 }
