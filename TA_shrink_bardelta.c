@@ -25,13 +25,6 @@
 #define MC 2
 #endif
 
-// not recommended: PRINT_ALL_UPDATES
-#define PRINT_ALL_UPDATES
-// even more ridiculous!
-//#define PRINT_UPDATE_CANDIDATES
-//#define DISPLAY_CANDIDATES
-//#define PRINT_RANGE_DATA
-
 // use THRESH_REPEAT=1 in "production code" (it only helps to denoise testing)
 #define THRESH_REPEAT 1
 
@@ -135,190 +128,138 @@ double oldmain(double **pointset, int n, int d)
   process_coord_data(pointset, n, d);
   
   //Algorithm starts here
-  for(t=1;t<=trials;t++)
-    { //Initialization
-      fprintf(stderr, "Trial %d/%d\n", t, trials);
+  for(t=1;t<=trials;t++) { //Initialization
+    fprintf(stderr, "Trial %d/%d\n", t, trials);
 
-      //Initialize k-value
+    //Initialize k-value
+    for (j=0; j<d; j++) {
+      start[j]=(int)((n_coords[j]-1)/2);
+    }
+    //Initialize mc-value
+    mc=2;
+
+    //Initialize iteration count
+    current_iteration=0;
+
+    //Generate threshold sequence   (only once)
+    //      fprintf(stderr, "Generating threshold\n");
+    for(i=1;i<=outerloop;i++){
+      current_iteration++;
+      //Update k-value
       for (j=0; j<d; j++) {
-	start[j]=(int)((n_coords[j]-1)/2);
+        k[j] = start[j]*(((double)outerloop-current_iteration)/(outerloop)) +
+          1*((double)current_iteration/(outerloop));
+        //	    k[j]=start[j] - (int)((3.0/4)*(current_iteration/outerloop)*(start[j]-1));
       }
-      //Initialize mc-value
-      mc=2;
-
-      //Initialize iteration count
-      current_iteration=0;
-
-      //Generate threshold sequence   (only once)
-      //      fprintf(stderr, "Generating threshold\n");
-      for(i=1;i<=outerloop;i++){
-	
-	current_iteration++;
-	//Update k-value
-	  for (j=0; j<d; j++) {
-	    k[j] = start[j]*(((double)outerloop-current_iteration)/(outerloop)) +
-	      1*((double)current_iteration/(outerloop));
-		  //	    k[j]=start[j] - (int)((3.0/4)*(current_iteration/outerloop)*(start[j]-1));
-	  }
 
         //Update mc-value
-	  mc=2+(int)(current_iteration/outerloop*(d-2));
+      mc=2+(int)(current_iteration/outerloop*(d-2));
 
 
-	//generation of random point xc
-	generate_xc_bardelta(xn_minus_index, xn_extraminus_index); 
-	
-	//(Possibly) Snap the points and compute the largest of the rounded values 
-	current = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
-    
-	//draw a neighbour of xc
-	generate_neighbor_bardelta(xn_minus_index, xn_extraminus_index, xc_index, k, mc);
-	
-	//Compute the threshold
-	fxc=best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
-	thresh[i]=0.0-fabs(fxc-current);
-      }	
-  
-      //sort the thresholds in increasing order
-      quicksort(1,outerloop,thresh);
-  
-
-      switches[t]=0;
-      global_switches[t]=0;
-      current=0;
-      global[t]=0;
-      when=0;
-      real_when=0;
-      real_max_discr=0;
-
-      //Initialize k-value
-      for (j=0; j<d; j++) {
-	start[j]=(int)((n_coords[j]-1)/2);
-      }
-      //Initialize mc-value
-      mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
-
-
-      //draw a random initial point 
-      generate_xc_bardelta(xn_minus_index, xn_extraminus_index);       
-   
-      //(Possibly) Snap and compute the best of the rounded points and update current value
-      current = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
+      //generation of random point xc
+      generate_xc_bardelta(xn_minus_index, xn_extraminus_index); 
       
-      global[t] = current;
+      //(Possibly) Snap the points and compute the largest of the rounded values 
+      current = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
+        
+      //draw a neighbour of xc
+      generate_neighbor_bardelta(xn_minus_index, xn_extraminus_index, xc_index, k, mc);
+      
+      //Compute the threshold
+      fxc=best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
+      thresh[i]=0.0-fabs(fxc-current);
+    }	
 
-      current_iteration=0;
-      for(i=1;i<=outerloop;i++)
-	{
-	  T=thresh[i];
-	  
-	  for(p=1;p<=innerloop;p++)
-	    {
-	      current_iteration++;
-	      
-	      //Update k-value
-#ifdef PRINT_RANGE_DATA
-	      if (p==1)
-		fprintf(stderr, "Snapshot: range ");
-#endif
-	      for (j=0; j<d; j++) {
-		k[j] = start[j]*(((double)innerloop*outerloop-current_iteration)/(innerloop*outerloop)) +
-		  1*((double)current_iteration/(innerloop*outerloop));
-		  //		k[j]=(int)(start[j]-(int)(current_iteration/(innerloop*outerloop)*(start[j]-1)));
-#ifdef PRINT_RANGE_DATA
-		if (p==1)
-		  fprintf(stderr, "%d ", k[j]);
-#endif
-	      }
+    //sort the thresholds in increasing order
+    quicksort(1,outerloop,thresh);
 
-	      //Update mc-value
-	      mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
-#ifdef PRINT_RANGE_DATA
-	      if (p==1)
-		fprintf(stderr, " threshold %g mc %d\n", T, mc);
-#endif
-	      //mc=2;
 
-	      //Get random neighbor
-	      generate_neighbor_bardelta(xn_minus_index, xn_extraminus_index, xc_index,k,mc);
-#ifdef DISPLAY_CANDIDATES
-	      fprintf(stderr, "Old: ");
-	      for (j=0; j<d; j++)
-		fprintf(stderr, "%d ", xc_index[j]);	    
-	      fprintf(stderr, "\nMinus: ");
-	      for (j=0; j<d; j++)
-		fprintf(stderr, "%d ", xn_minus_index[j]);
-	      fprintf(stderr, "\nXMinus: ");
-	      for (j=0; j<d; j++)
-		fprintf(stderr, "%d ", xn_extraminus_index[j]);
-	      fprintf(stderr, "\n");
-#endif
+    switches[t]=0;
+    global_switches[t]=0;
+    current=0;
+    global[t]=0;
+    when=0;
+    real_when=0;
+    real_max_discr=0;
 
-	      //(Possibly) Snap the points and compute the best of the rounded points 
-	      fxc = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xn_best_index);
-#ifdef PRINT_UPDATE_CANDIDATES
-	      fprintf(stderr, "Iter. %d candidate %10g (vs %10g best %10g) -- ",
-		      current_iteration, fxc, current, global[t]);
-#endif
-	      //Global update if necessary
-	      if(fxc>global[t]){
-		global_switches[t]++;
-		global[t]=fxc;
-		when=current_iteration;
-#ifdef PRINT_UPDATE_CANDIDATES
-		fprintf(stderr, "global ");
-#endif
-#ifdef PRINT_ALL_UPDATES
-		fprintf(stderr, "%g at %d :", fxc, current_iteration);
-		for (j=0; j<d; j++)
-		  fprintf(stderr, " %d", xn_best_index[j]);
-		fprintf(stderr, "\n");
-#endif
-	      }
-	      //Update of current best value if necessary
-	      if(fxc-current>=T){
-#ifdef PRINT_UPDATE_CANDIDATES
-		fprintf(stderr, "update\n");
-#endif
-		switches[t]++;
-		current=fxc;
-		for(j=0; j<d; j++){
-		  xc_index[j]=xn_best_index[j];
-		}
-	      }
-#ifdef PRINT_UPDATE_CANDIDATES
-	      else {
-		fprintf(stderr, "skip\n");
-	      }
-#endif
-	    }//innerloop
-	}//outerloop
-      if (real_max_discr > global[t]) {
-	global[t] = real_max_discr;
-	when = real_when;
-	//	fprintf(stderr, "Max value subsumed\n");
-      }
-      fprintf(stderr, "Result %g at %d\n", global[t], when);
-      fprintf(stdout, "%g\n", global[t]); // To simplify post-execution bookkeeping
-    }//trials
+    //Initialize k-value
+    for (j=0; j<d; j++) {
+      start[j]=(int)((n_coords[j]-1)/2);
+    }
+    //Initialize mc-value
+    mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
+
+
+    //draw a random initial point 
+    generate_xc_bardelta(xn_minus_index, xn_extraminus_index);       
+  
+    //(Possibly) Snap and compute the best of the rounded points and update current value
+    current = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
+    
+    global[t] = current;
+
+    current_iteration=0;
+    for(i=1;i<=outerloop;i++) {
+      T=thresh[i];
+      
+      for(p=1;p<=innerloop;p++) {
+        current_iteration++;
+      
+        //Update k-value
+        for (j=0; j<d; j++) {
+          k[j] = start[j]*(((double)innerloop*outerloop-current_iteration)/(innerloop*outerloop)) +
+          1*((double)current_iteration/(innerloop*outerloop));
+          //		k[j]=(int)(start[j]-(int)(current_iteration/(innerloop*outerloop)*(start[j]-1)));
+        }
+
+        //Update mc-value
+        mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
+        //mc=2;
+
+        //Get random neighbor
+        generate_neighbor_bardelta(xn_minus_index, xn_extraminus_index, xc_index,k,mc);
+
+        //(Possibly) Snap the points and compute the best of the rounded points 
+        fxc = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xn_best_index);
+        //Global update if necessary
+        if(fxc>global[t]){
+          global_switches[t]++;
+          global[t]=fxc;
+          when=current_iteration;
+        }
+        //Update of current best value if necessary
+        if(fxc-current>=T){
+          switches[t]++;
+          current=fxc;
+          for(j=0; j<d; j++){
+            xc_index[j]=xn_best_index[j];
+          }
+        }
+      }//innerloop
+    }//outerloop
+    if (real_max_discr > global[t]) {
+      global[t] = real_max_discr;
+      when = real_when;
+      //	fprintf(stderr, "Max value subsumed\n");
+    }
+    fprintf(stderr, "Result %g at %d\n", global[t], when);
+    fprintf(stdout, "%g\n", global[t]); // To simplify post-execution bookkeeping
+  }//trials
   
   
   //best calculated value 
   best=global[1];
   for(j=0; j<d; j++) xbest[j]=xglobal[1][j];
-  for(t=2;t<=trials;t++)
-    {
-      if(global[t]>best)
-	{ 
-	  best=global[t];
-	  for(j=0; j<d; j++) xbest[j]=xglobal[t][j];
-	}
+  for(t=2;t<=trials;t++) {
+    if(global[t]>best) { 
+      best=global[t];
+      for(j=0; j<d; j++) xbest[j]=xglobal[t][j];
     }
+  }
   
-  for(t=1;t<=trials;t++)
-    {
-      if(global[t]==best) anzahl++;
-    }
+  for(t=1;t<=trials;t++) {
+    if(global[t]==best) anzahl++;
+  }
   fprintf(datei_ptr,"best %e  ",best);
   // for(j=0; j<d; j++)  fprintf(datei_ptr,"xbest %d coo  %e\n", j,xbest[j]);
   
@@ -377,13 +318,13 @@ int main(int argc, char **argv)
       i_tilde=(int)sqrt(atoi(argv[++pos]));
       pos++;
       fprintf(stderr, "Using %d iterations (adj. for sqrt)\n",
-	      i_tilde*i_tilde);
+        i_tilde*i_tilde);
     }
     else if (!strcmp(argv[pos], "-trials")) {
       trials = atoi(argv[++pos]);
       pos++;
       fprintf(stderr, "Doing %d independent trials (currently: times ten thresh. rep.)\n",
-	      trials);
+        trials);
       trials*=THRESH_REPEAT;
 
     }
