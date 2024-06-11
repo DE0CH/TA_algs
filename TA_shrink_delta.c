@@ -25,13 +25,6 @@
 #define MC 2
 #endif
 
-// not recommended: PRINT_ALL_UPDATES
-#define PRINT_ALL_UPDATES
-// even more ridiculous!
-//#define PRINT_UPDATE_CANDIDATES
-//#define DISPLAY_CANDIDATES
-//#define PRINT_RANGE_DATA
-
 // use THRESH_REPEAT=1 in "production code" (it only helps to denoise testing)
 #define THRESH_REPEAT 1
 
@@ -114,7 +107,7 @@ double oldmain(double **pointset, int n, int d)
 
       //Initialize k-value
       for (j=0; j<d; j++) {
-	start[j]=(int)((n_coords[j]-1)/2);
+	      start[j]=(int)((n_coords[j]-1)/2);
       }
       //Initialize mc-value
       mc=2;
@@ -124,31 +117,30 @@ double oldmain(double **pointset, int n, int d)
 
       //Generate threshold sequence
       for(i=1;i<=outerloop;i++){
-	
-	current_iteration++;
-	//Update k-value
-	  for (j=0; j<d; j++) {
-	    k[j] = start[j]*(((double)outerloop-current_iteration)/(outerloop)) +
-	      1*((double)current_iteration/(outerloop));
-		  //	    k[j]=start[j] - (int)((3.0/4)*(current_iteration/outerloop)*(start[j]-1));
-	  }
+        current_iteration++;
+        //Update k-value
+        for (j=0; j<d; j++) {
+          k[j] = start[j]*(((double)outerloop-current_iteration)/(outerloop)) +
+            1*((double)current_iteration/(outerloop));
+          //	    k[j]=start[j] - (int)((3.0/4)*(current_iteration/outerloop)*(start[j]-1));
+        }
 
-        //Update mc-value
-	  mc=2+(int)(current_iteration/outerloop*(d-2));
+          //Update mc-value
+        mc=2+(int)(current_iteration/outerloop*(d-2));
 
 
-	//generation of random point xc
-	generate_xc_delta(xc_index); 
-	
-	//(Possibly) Snaps the point upwards and computes the fitness
-	current = best_of_rounded_delta(xc_index);
-    
-	//draw a neighbour of xc
-	generate_neighbor_delta(xn_plus_index, xc_index, k, mc);
-	
-	//Compute the threshold
-	fxc=best_of_rounded_delta(xn_plus_index);
-	thresh[i]=0.0-fabs(fxc-current);
+        //generation of random point xc
+        generate_xc_delta(xc_index); 
+        
+        //(Possibly) Snaps the point upwards and computes the fitness
+        current = best_of_rounded_delta(xc_index);
+          
+        //draw a neighbour of xc
+        generate_neighbor_delta(xn_plus_index, xc_index, k, mc);
+        
+        //Compute the threshold
+        fxc=best_of_rounded_delta(xn_plus_index);
+        thresh[i]=0.0-fabs(fxc-current);
       }	
   
       //sort the thresholds in increasing order
@@ -165,7 +157,7 @@ double oldmain(double **pointset, int n, int d)
 
       //Initialize k-value
       for (j=0; j<d; j++) {
-	start[j]=(int)((n_coords[j]-1)/2);
+        start[j]=(int)((n_coords[j]-1)/2);
       }
       //Initialize mc-value
       mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
@@ -180,114 +172,66 @@ double oldmain(double **pointset, int n, int d)
       global[t] = current;
 
       current_iteration=0;
-      for(i=1;i<=outerloop;i++)
-	{
-	  T=thresh[i];
-	  
-	  for(p=1;p<=innerloop;p++)
-	    {
-	      current_iteration++;
-	      
-	      //Update k-value
-#ifdef PRINT_RANGE_DATA
-	      if (p==1)
-		fprintf(stderr, "Snapshot: range ");
-#endif
-	      for (j=0; j<d; j++) {
-		k[j] = start[j]*(((double)innerloop*outerloop-current_iteration)/(innerloop*outerloop)) +
-		  1*((double)current_iteration/(innerloop*outerloop));
-		  //		k[j]=(int)(start[j]-(int)(current_iteration/(innerloop*outerloop)*(start[j]-1)));
-#ifdef PRINT_RANGE_DATA
-		if (p==1)
-		  fprintf(stderr, "%d ", k[j]);
-#endif
-	      }
+      for(i=1;i<=outerloop;i++) {
+        T=thresh[i];
+        
+        for(p=1;p<=innerloop;p++) {
+          current_iteration++;
+          
+          //Update k-value
+          for (j=0; j<d; j++) {
+            k[j] = start[j]*(((double)innerloop*outerloop-current_iteration)/(innerloop*outerloop)) +
+            1*((double)current_iteration/(innerloop*outerloop));
+            //		k[j]=(int)(start[j]-(int)(current_iteration/(innerloop*outerloop)*(start[j]-1)));
+          }
 
 	      //Update mc-value
 	      mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
-#ifdef PRINT_RANGE_DATA
-	      if (p==1)
-		fprintf(stderr, " threshold %g mc %d\n", T, mc);
-#endif
 	      //mc=2;
 
 	      //Get random neighbor
 	      generate_neighbor_delta(xn_plus_index, xc_index,k,mc);
-#ifdef DISPLAY_CANDIDATES
-	      fprintf(stderr, "Old: ");
-	      for (j=0; j<d; j++)
-		fprintf(stderr, "%d ", xc_index[j]);	    
-	      fprintf(stderr, "\nPlus: ");
-	      for (j=0; j<d; j++)
-		fprintf(stderr, "%d ", xn_plus_index[j]);
-	      fprintf(stderr, "\n");
-#endif
 
 	      //(Possibly) Snap the points and compute the best of the rounded points 
 	      fxc = best_of_rounded_delta(xn_plus_index);
-#ifdef PRINT_UPDATE_CANDIDATES
-	      fprintf(stderr, "Iter. %d candidate %10g (vs %10g best %10g) -- ",
-		      current_iteration, fxc, current, global[t]);
-#endif
 	      //Global update if necessary
 	      if(fxc>global[t]){
-		global_switches[t]++;
-		global[t]=fxc;
-		when=current_iteration;
-#ifdef PRINT_UPDATE_CANDIDATES
-		fprintf(stderr, "global ");
-#endif
-#ifdef PRINT_ALL_UPDATES
-		fprintf(stderr, "%g at %d :", fxc, current_iteration);
-		for (j=0; j<d; j++)
-		  fprintf(stderr, " %d", xn_plus_index[j]);
-		fprintf(stderr, "\n");
-#endif
+          global_switches[t]++;
+          global[t]=fxc;
+          when=current_iteration;
 	      }
 	      //Update of current best value if necessary
 	      if(fxc-current>=T){
-#ifdef PRINT_UPDATE_CANDIDATES
-		fprintf(stderr, "update\n");
-#endif
-		switches[t]++;
-		current=fxc;
-		for(j=0; j<d; j++){
-		  xc_index[j]=xn_plus_index[j];
-		}
+          switches[t]++;
+          current=fxc;
+          for(j=0; j<d; j++){
+            xc_index[j]=xn_plus_index[j];
+          }
 	      }
-#ifdef PRINT_UPDATE_CANDIDATES
-	      else {
-		fprintf(stderr, "skip\n");
-	      }
-#endif
 	    }//innerloop
-	}//outerloop
-      if (real_max_discr > global[t]) {
-	global[t] = real_max_discr;
-	when = real_when;
-	//	fprintf(stderr, "Max value subsumed\n");
-      }
-      fprintf(stderr, "Result %g at %d\n", global[t], when);
-      fprintf(stdout, "%g\n", global[t]); // To simplify post-execution bookkeeping
-    }//trials
-  
-  
+	  }//outerloop
+    if (real_max_discr > global[t]) {
+      global[t] = real_max_discr;
+      when = real_when;
+      //	fprintf(stderr, "Max value subsumed\n");
+    }
+    fprintf(stderr, "Result %g at %d\n", global[t], when);
+    fprintf(stdout, "%g\n", global[t]); // To simplify post-execution bookkeeping
+  }//trials
+
   //best calculated value 
   best=global[1];
   for(j=0; j<d; j++) xbest[j]=xglobal[1][j];
-  for(t=2;t<=trials;t++)
-    {
-      if(global[t]>best)
-	{ 
-	  best=global[t];
-	  for(j=0; j<d; j++) xbest[j]=xglobal[t][j];
-	}
+  for(t=2;t<=trials;t++) {
+    if(global[t]>best) { 
+      best=global[t];
+      for(j=0; j<d; j++) xbest[j]=xglobal[t][j];
     }
+  }
   
-  for(t=1;t<=trials;t++)
-    {
-      if(global[t]==best) anzahl++;
-    }
+  for(t=1;t<=trials;t++) {
+    if(global[t]==best) anzahl++;
+  }
   fprintf(datei_ptr,"best %e  ",best);
   // for(j=0; j<d; j++)  fprintf(datei_ptr,"xbest %d coo  %e\n", j,xbest[j]);
   
