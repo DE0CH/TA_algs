@@ -101,115 +101,114 @@ double oldmain(double **pointset, int n, int d)
   process_coord_data(pointset, n, d);
   
   //Algorithm starts here
-  for(t=1;t<=trials;t++)
-    { //Initialization
-      fprintf(stderr, "Trial %d/%d\n", t, trials);
+  for(t=1;t<=trials;t++) { //Initialization
+    fprintf(stderr, "Trial %d/%d\n", t, trials);
 
-      //Initialize k-value
+    //Initialize k-value
+    for (j=0; j<d; j++) {
+      start[j]=(int)((n_coords[j]-1)/2);
+    }
+    //Initialize mc-value
+    mc=2;
+
+    //Initialize iteration count
+    current_iteration=0;
+
+    //Generate threshold sequence
+    for(i=1;i<=outerloop;i++){
+      current_iteration++;
+      //Update k-value
       for (j=0; j<d; j++) {
-	      start[j]=(int)((n_coords[j]-1)/2);
+        k[j] = start[j]*(((double)outerloop-current_iteration)/(outerloop)) +
+          1*((double)current_iteration/(outerloop));
+        //	    k[j]=start[j] - (int)((3.0/4)*(current_iteration/outerloop)*(start[j]-1));
       }
-      //Initialize mc-value
-      mc=2;
 
-      //Initialize iteration count
-      current_iteration=0;
+        //Update mc-value
+      mc=2+(int)(current_iteration/outerloop*(d-2));
 
-      //Generate threshold sequence
-      for(i=1;i<=outerloop;i++){
+
+      //generation of random point xc
+      generate_xc_delta(xc_index); 
+      
+      //(Possibly) Snaps the point upwards and computes the fitness
+      current = best_of_rounded_delta(xc_index);
+        
+      //draw a neighbour of xc
+      generate_neighbor_delta(xn_plus_index, xc_index, k, mc);
+      
+      //Compute the threshold
+      fxc=best_of_rounded_delta(xn_plus_index);
+      thresh[i]=0.0-fabs(fxc-current);
+    }	
+
+    //sort the thresholds in increasing order
+    quicksort(1,outerloop,thresh);
+
+
+    switches[t]=0;
+    global_switches[t]=0;
+    current=0;
+    global[t]=0;
+    when=0;
+    real_when=0;
+    real_max_discr=0;
+
+    //Initialize k-value
+    for (j=0; j<d; j++) {
+      start[j]=(int)((n_coords[j]-1)/2);
+    }
+    //Initialize mc-value
+    mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
+
+
+    //draw a random initial point 
+    generate_xc_delta(xc_index);
+  
+    //(Possibly) Snap and compute the best of the rounded points and update current value
+    current = best_of_rounded_delta(xc_index);
+    
+    global[t] = current;
+
+    current_iteration=0;
+    for(i=1;i<=outerloop;i++) {
+      T=thresh[i];
+      
+      for(p=1;p<=innerloop;p++) {
         current_iteration++;
+        
         //Update k-value
         for (j=0; j<d; j++) {
-          k[j] = start[j]*(((double)outerloop-current_iteration)/(outerloop)) +
-            1*((double)current_iteration/(outerloop));
-          //	    k[j]=start[j] - (int)((3.0/4)*(current_iteration/outerloop)*(start[j]-1));
+          k[j] = start[j]*(((double)innerloop*outerloop-current_iteration)/(innerloop*outerloop)) +
+          1*((double)current_iteration/(innerloop*outerloop));
+          //		k[j]=(int)(start[j]-(int)(current_iteration/(innerloop*outerloop)*(start[j]-1)));
         }
 
-          //Update mc-value
-        mc=2+(int)(current_iteration/outerloop*(d-2));
+        //Update mc-value
+        mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
+        //mc=2;
 
+        //Get random neighbor
+        generate_neighbor_delta(xn_plus_index, xc_index,k,mc);
 
-        //generation of random point xc
-        generate_xc_delta(xc_index); 
-        
-        //(Possibly) Snaps the point upwards and computes the fitness
-        current = best_of_rounded_delta(xc_index);
-          
-        //draw a neighbour of xc
-        generate_neighbor_delta(xn_plus_index, xc_index, k, mc);
-        
-        //Compute the threshold
-        fxc=best_of_rounded_delta(xn_plus_index);
-        thresh[i]=0.0-fabs(fxc-current);
-      }	
-  
-      //sort the thresholds in increasing order
-      quicksort(1,outerloop,thresh);
-  
-
-      switches[t]=0;
-      global_switches[t]=0;
-      current=0;
-      global[t]=0;
-      when=0;
-      real_when=0;
-      real_max_discr=0;
-
-      //Initialize k-value
-      for (j=0; j<d; j++) {
-        start[j]=(int)((n_coords[j]-1)/2);
-      }
-      //Initialize mc-value
-      mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
-
-
-      //draw a random initial point 
-      generate_xc_delta(xc_index);
-   
-      //(Possibly) Snap and compute the best of the rounded points and update current value
-      current = best_of_rounded_delta(xc_index);
-      
-      global[t] = current;
-
-      current_iteration=0;
-      for(i=1;i<=outerloop;i++) {
-        T=thresh[i];
-        
-        for(p=1;p<=innerloop;p++) {
-          current_iteration++;
-          
-          //Update k-value
-          for (j=0; j<d; j++) {
-            k[j] = start[j]*(((double)innerloop*outerloop-current_iteration)/(innerloop*outerloop)) +
-            1*((double)current_iteration/(innerloop*outerloop));
-            //		k[j]=(int)(start[j]-(int)(current_iteration/(innerloop*outerloop)*(start[j]-1)));
-          }
-
-	      //Update mc-value
-	      mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
-	      //mc=2;
-
-	      //Get random neighbor
-	      generate_neighbor_delta(xn_plus_index, xc_index,k,mc);
-
-	      //(Possibly) Snap the points and compute the best of the rounded points 
-	      fxc = best_of_rounded_delta(xn_plus_index);
-	      //Global update if necessary
-	      if(fxc>global[t]){
+        //(Possibly) Snap the points and compute the best of the rounded points 
+        fxc = best_of_rounded_delta(xn_plus_index);
+        //Global update if necessary
+        if(fxc>global[t]){
           global_switches[t]++;
           global[t]=fxc;
           when=current_iteration;
-	      }
-	      //Update of current best value if necessary
-	      if(fxc-current>=T){
+        }
+        //Update of current best value if necessary
+        if(fxc-current>=T){
           switches[t]++;
           current=fxc;
           for(j=0; j<d; j++){
             xc_index[j]=xn_plus_index[j];
           }
-	      }
-	    }//innerloop
-	  }//outerloop
+        }
+      }//innerloop
+    }//outerloop
     if (real_max_discr > global[t]) {
       global[t] = real_max_discr;
       when = real_when;
