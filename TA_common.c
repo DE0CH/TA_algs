@@ -219,59 +219,6 @@ int point_critical_dimension(int *corner, int *point)
   return crit;
 }
 
-// "really old" O(nd^2) time alg.
-void old_grow_box(int *corner)
-{
-  int order[n_dimensions];
-  int n=n_points, d=n_dimensions;
-  int i,j,k, swap;
-  int curr_d;
-  int max_idx;
-  for (i=0; i<d; i++)
-    order[i]=i;
-  for (i=0; i<d; i++) {
-    j = i + random()%(d-i);
-    if (i != j) {
-      swap=order[i];
-      order[i]=order[j];
-      order[j]=swap;
-    }
-  }
-  /* 
-  fprintf(stderr, "Growing base ");
-  for (i=0; i<d; i++)
-    fprintf(stderr, "%d ", corner[i]);
-  fprintf(stderr, "in order ");
-  for (i=0; i<d; i++)
-    fprintf(stderr, "%d ", order[i]);
-  fprintf(stderr, "\n");
-   */
-
-  for (i=0; i<d; i++) {
-    curr_d=order[i];
-    max_idx=n_coords[curr_d]-1;    //    max_val=1.0;
-    /* 
-    fprintf(stderr, "Direction %d (base", curr_d);
-    for (j=0; j<d; j++)
-      fprintf(stderr ," %d", corner[j]);
-    fprintf(stderr, "), start %d\n", max_idx);
-     */
-    for (j=0; j<n; j++) {
-      if (point_critical_dimension(corner, point_index[j])==curr_d)
-        if (point_index[j][curr_d] < max_idx) {
-          max_idx=point_index[j][curr_d];
-          /* 
-          fprintf(stderr, "Because of point ");
-          for (k=0; k<d; k++)
-            fprintf(stderr,"%d ", point_index[j][k]);
-          fprintf(stderr, "bounded at %d\n", max_idx);
-          */
-        }
-    }
-    corner[curr_d] = max_idx;
-  }
-}
-
 //void grow_box_newer(int *corner)
 void grow_box_randomly(int *corner)
 {
@@ -318,46 +265,6 @@ void grow_box_randomly(int *corner)
   for (i=0; i<d; i++)
     corner[i]=new_box[i];
 }
-
-//Older version does not perform "memo" check
-void grow_box_older(int *corner)
-{
-  int order[n_dimensions];
-  int n=n_points, d=n_dimensions;
-  int i,j,k, swap;
-  int curr_d;
-  int new_box[d];
-
-  for (i=0; i<d; i++)
-    order[i]=i;
-  for (i=0; i<d; i++) {
-    j = i + random()%(d-i);
-    if (i != j) {
-      swap=order[i];
-      order[i]=order[j];
-      order[j]=swap;
-    }
-  }
-  for (i=0; i<d; i++)
-    new_box[i] = n_coords[i]-1;
-
-  for (i=0; i<n; i++) {
-    for (j=0; j<d; j++) {
-      curr_d=order[j];
-      k=point_index[i][curr_d];
-      if (k >= corner[curr_d]) {
-        if (k < new_box[curr_d])
-          new_box[curr_d]=k;
-        break;
-      }
-    }
-  }
-
-  for (i=0; i<d; i++)
-    corner[i]=new_box[i];
-}
-
-//#define grow_box_randomly grow_box_older
 
 // Rounds box down to borders given by its contained points.
 void snap_box(int *corner)

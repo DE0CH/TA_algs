@@ -51,8 +51,6 @@ int count_closed(int *corner);
 
 void grow_box_randomly(int *corner);
 
-void old_grow_box(int *corner);
-
 // Rounds box down to borders given by its contained points.
 void snap_box(int *corner);
 
