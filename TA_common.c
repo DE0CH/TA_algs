@@ -9,13 +9,6 @@
 #include <math.h>
 #include <string.h>
 
-// not recommended: PRINT_ALL_UPDATES
-#define PRINT_ALL_UPDATES
-// even more ridiculous!
-//#define PRINT_UPDATE_CANDIDATES
-//#define DISPLAY_CANDIDATES
-//#define PRINT_RANGE_DATA
-
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)<(b)?(a):(b))
 
@@ -40,18 +33,15 @@ int dbl_compare(const void *a, const void *b)
   return 0;
 } // oops: "x-y" gets cast to integer, rounded wrong
 
-void quicksort(int left, int right, double *arr) 
-{
+void quicksort(int left, int right, double *arr) {
   qsort(&arr[left], right-left+1, sizeof(double), dbl_compare);
 }
 
-double get_coord(int d, int i) 
-{
+double get_coord(int d, int i) {
   return coord[d][i];
 }
 
-int get_index_up(int d, double key)
-{
+int get_index_up(int d, double key) {
   int i=(int)key*(n_coords[d]-1);
   while (coord[d][i] < key)
     i++;
@@ -62,8 +52,7 @@ int get_index_up(int d, double key)
   return i;
 }
 
-int get_index_down(int d, double key)
-{
+int get_index_down(int d, double key){
   int bound=n_coords[d]-1;
   int i=key*bound;
   while (coord[d][i] > key)
@@ -75,22 +64,19 @@ int get_index_down(int d, double key)
 
 // The following two functions use an "output variable" provided by the caller
 // (anything else would just mess up the C memory management)
-void round_point_up(double *point, int *output)
-{
+void round_point_up(double *point, int *output) {
   int i;
   for (i=0; i<n_dimensions; i++)
     output[i] = get_index_up(i, point[i]);
 }
 
-void round_point_down(double *point, int *output)
-{
+void round_point_down(double *point, int *output) {
   int i;
   for (i=0; i<n_dimensions; i++)
     output[i] = get_index_down(i, point[i]);
 }
 
-void round_point_extradown(double *point, int *output)
-{
+void round_point_extradown(double *point, int *output) {
   int i;
   for (i=0; i<n_dimensions; i++) {
     output[i] = get_index_down(i, point[i]);
@@ -99,8 +85,7 @@ void round_point_extradown(double *point, int *output)
   }
 }
 
-void process_coord_data(double **points, int n, int d)
-{
+void process_coord_data(double **points, int n, int d) {
   int i,j;
   double tmp_coords[n+2];
   int n_uniq, idx;
@@ -124,7 +109,7 @@ void process_coord_data(double **points, int n, int d)
     prev_coord=0;
     for (j=1; j<=n+1; j++) { // inclusive bound: contains 1.0
       if (prev_coord==tmp_coords[j])
-	continue;
+	      continue;
       n_uniq++;
       prev_coord=tmp_coords[j];
     }
@@ -135,15 +120,15 @@ void process_coord_data(double **points, int n, int d)
     coord[i][0]=prev_coord;
     for (j=1; j<=n+1; j++) {
       if (prev_coord==tmp_coords[j])
-	continue;
+	      continue;
       prev_coord=tmp_coords[j];
       coord[i][idx++] = prev_coord;
     }
     n_coords[i]=n_uniq;
-//    fprintf(stderr, "Coordinates %d, %d: ", i, n_uniq);
-//    for (j=0; j<n_uniq; j++)
-//      fprintf(stderr, "%g ", coord[i][j]);
-//    fprintf(stderr,"\n");
+    //    fprintf(stderr, "Coordinates %d, %d: ", i, n_uniq);
+    //    for (j=0; j<n_uniq; j++)
+    //      fprintf(stderr, "%g ", coord[i][j]);
+    //    fprintf(stderr,"\n");
   }
   // finished setup for: n_coords[], coord[][]
 
@@ -155,9 +140,8 @@ void process_coord_data(double **points, int n, int d)
     for (j=0; j<n_dimensions; j++) {
       idx=get_index_up(j, points[i][j]);
       if (coord[j][idx] != points[i][j]) {
-	fprintf(stderr, "ERROR: located incorrect coordinate (%g at %d, wanted %g).\n",
-		coord[j][idx], idx, points[i][j]);
-	abort();
+        fprintf(stderr, "ERROR: located incorrect coordinate (%g at %d, wanted %g).\n", coord[j][idx], idx, points[i][j]);
+        abort();
       }
       point_index[i][j] = idx;
     }
@@ -274,15 +258,15 @@ void old_grow_box(int *corner)
      */
     for (j=0; j<n; j++) {
       if (point_critical_dimension(corner, point_index[j])==curr_d)
-	if (point_index[j][curr_d] < max_idx) {
-	  max_idx=point_index[j][curr_d];
-	  /* 
-	  fprintf(stderr, "Because of point ");
-	  for (k=0; k<d; k++)
-	    fprintf(stderr,"%d ", point_index[j][k]);
-	  fprintf(stderr, "bounded at %d\n", max_idx);
-	   */
-	}
+        if (point_index[j][curr_d] < max_idx) {
+          max_idx=point_index[j][curr_d];
+          /* 
+          fprintf(stderr, "Because of point ");
+          for (k=0; k<d; k++)
+            fprintf(stderr,"%d ", point_index[j][k]);
+          fprintf(stderr, "bounded at %d\n", max_idx);
+          */
+        }
     }
     corner[curr_d] = max_idx;
   }
@@ -316,33 +300,20 @@ void grow_box_randomly(int *corner)
       curr_d=order[j];
       k=point_index[i][curr_d];
       if (k >= corner[curr_d]) {
-	if (k < new_box[curr_d]) {
-	  if (memo<0)
-	    memo=curr_d;
-	}
-	else {
-	  memo=-1;
-	  break;
-	}
+        if (k < new_box[curr_d]) {
+          if (memo<0)
+            memo=curr_d;
+        }
+        else {
+          memo=-1;
+          break;
+        }
       }
     }
     if (memo >= 0)
       new_box[memo] = point_index[i][memo];
   }
 
-#ifdef DEBUG
-  if (count_open(corner) != count_open(new_box)) {
-    fprintf(stderr, "ERROR: Went from %d to %d points.\n", count_open(corner), count_open(new_box));
-    fprintf(stderr, "Old box: ");
-    for (i=0; i<d; i++)
-      fprintf(stderr, "%d ", corner[i]);
-    fprintf(stderr, "\nNew box: ");
-    for (i=0; i<d; i++)
-      fprintf(stderr, "%d ", new_box[i]);
-    fprintf(stderr, "\n");
-    abort();
-  }
-#endif
 
   for (i=0; i<d; i++)
     corner[i]=new_box[i];
@@ -375,25 +346,12 @@ void grow_box_older(int *corner)
       curr_d=order[j];
       k=point_index[i][curr_d];
       if (k >= corner[curr_d]) {
-	if (k < new_box[curr_d])
-	  new_box[curr_d]=k;
-	break;
+        if (k < new_box[curr_d])
+          new_box[curr_d]=k;
+        break;
       }
     }
   }
-#ifdef DEBUG
-  if (count_open(corner) != count_open(new_box)) {
-    fprintf(stderr, "ERROR: Went from %d to %d points.\n", count_open(corner), count_open(new_box));
-    fprintf(stderr, "Old box: ");
-    for (i=0; i<d; i++)
-      fprintf(stderr, "%d ", corner[i]);
-    fprintf(stderr, "\nNew box: ");
-    for (i=0; i<d; i++)
-      fprintf(stderr, "%d ", new_box[i]);
-    fprintf(stderr, "\n");
-    abort();
-  }
-#endif
 
   for (i=0; i<d; i++)
     corner[i]=new_box[i];
@@ -468,11 +426,10 @@ void generate_xc(int *xn_plus, int *xn_minus, int *xn_extraminus)
   int j, d=n_dimensions;
   double xn[d];
   double temp;
-  for(j=0; j<d; j++)
-    {
-      temp=(double)((double)rand()/RAND_MAX);
-      xn[j]=pow(temp,(double)((double)1/(double)d));
-    }
+  for(j=0; j<d; j++) {
+    temp=(double)((double)rand()/RAND_MAX);
+    xn[j]=pow(temp,(double)((double)1/(double)d));
+  }
   round_point_up(xn, xn_plus);
   round_point_down(xn, xn_minus);
   round_point_extradown(xn, xn_extraminus);		
@@ -483,11 +440,10 @@ void generate_xc_delta(int *xn_plus)
   int j, d=n_dimensions;
   double xn[d];
   double temp;
-  for(j=0; j<d; j++)
-    {
-      temp=(double)((double)rand()/RAND_MAX);
-      xn[j]=pow(temp,(double)((double)1/(double)d));
-    }
+  for(j=0; j<d; j++) {
+    temp=(double)((double)rand()/RAND_MAX);
+    xn[j]=pow(temp,(double)((double)1/(double)d));
+  }
   round_point_up(xn, xn_plus);
 }
 
@@ -496,11 +452,10 @@ void generate_xc_bardelta(int *xn_minus, int *xn_extraminus)
   int j, d=n_dimensions;
   double xn[d];
   double temp;
-  for(j=0; j<d; j++)
-    {
-      temp=(double)((double)rand()/RAND_MAX);
-      xn[j]=pow(temp,(double)((double)1/(double)d));
-    }
+  for(j=0; j<d; j++) {
+    temp=(double)((double)rand()/RAND_MAX);
+    xn[j]=pow(temp,(double)((double)1/(double)d));
+  }
   round_point_down(xn, xn_minus);
   round_point_extradown(xn, xn_extraminus);		
 }
@@ -517,10 +472,9 @@ void generate_neighbor (int *xn_plus_index, int *xn_minus_index, int *xn_extrami
   double xn[d];
 
   //First copy the values of the current search point 
-  for(j=0; j<d; j++)
-    {
-      xn[j] = coord[j][xc_index[j]];
-    }
+  for(j=0; j<d; j++) {
+    xn[j] = coord[j][xc_index[j]];
+  }
 
   // find mc different coordinates to be changed
   for (j=0; j<mc; j++) {
@@ -554,18 +508,15 @@ void generate_neighbor (int *xn_plus_index, int *xn_minus_index, int *xn_extrami
   round_point_extradown(xn, xn_extraminus_index);
 }
 
-void generate_neighbor_delta(int *xn_plus_index, 
-			int *xc_index, int *k, int mc)
-{
+void generate_neighbor_delta(int *xn_plus_index, int *xc_index, int *k, int mc) {
   int i, j, q, d=n_dimensions;
   double temp, upper_bound, lower_bound;
   double xn[d];
 
   //First copy the values of the current search point 
-  for(j=0; j<d; j++)
-    {
-      xn[j] = coord[j][xc_index[j]];
-    }
+  for(j=0; j<d; j++) {
+    xn[j] = coord[j][xc_index[j]];
+  }
 
   // find mc different coordinates to be changed
   for (j=0; j<mc; j++) {
@@ -598,17 +549,15 @@ void generate_neighbor_delta(int *xn_plus_index,
 }
 
 void generate_neighbor_bardelta(int *xn_minus_index, int *xn_extraminus_index, 
-			int *xc_index, int *k, int mc)
-{
+			int *xc_index, int *k, int mc) {
   int i, j, q, d=n_dimensions;
   double temp, upper_bound, lower_bound;
   double xn[d];
 
   //First copy the values of the current search point 
-  for(j=0; j<d; j++)
-    {
-      xn[j] = coord[j][xc_index[j]];
-    }
+  for(j=0; j<d; j++) {
+    xn[j] = coord[j][xc_index[j]];
+  }
 
   // find mc different coordinates to be changed
   for (j=0; j<mc; j++) {
