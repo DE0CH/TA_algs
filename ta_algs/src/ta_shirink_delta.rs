@@ -2,6 +2,7 @@ use ordered_float::NotNan;
 use crate::common::{PointsGrid, PointIndex, Point, K};
 use fastrand::Rng;
 use itertools::Itertools;
+use clap::{arg, command, value_parser, ArgAction, Command};
 
 impl<'a> PointIndex<'a> {
     pub fn grow_box_randomly(&self, rng: &mut Rng) -> PointIndex<'a> {
@@ -32,7 +33,7 @@ impl<'a> PointIndex<'a> {
     }
 }
 
-pub fn entry(point_set: Vec<Vec<NotNan<f64>>>, iterations: u64, rng: &mut Rng) {
+pub fn trial(point_set: Vec<Vec<NotNan<f64>>>, iterations: u64, rng: &mut Rng) {
     let points_grid = PointsGrid::new(point_set);
     let i_tilde = (iterations as f64).sqrt();
     let mut thresh: Vec<_> = (0..i_tilde as usize).map(|i| {
@@ -44,15 +45,15 @@ pub fn entry(point_set: Vec<Vec<NotNan<f64>>>, iterations: u64, rng: &mut Rng) {
         let k = K(k.map(|v| v as usize).collect());
         let mc: usize = (2.0 + current_iteration/i_tilde*(points_grid.d as f64 - 2.0)) as usize;
         let xc_index = points_grid.generate_xc_delta(rng);
-        let current = xc_index.grow_box_randomly(rng).get_delta();
+        let current = xc_index.snap_up(rng).get_delta();
         let xc_plus = xc_index.generate_neighbor_delta(k, mc, rng);
-        let fxc = xc_plus.grow_box_randomly(rng).get_delta();
+        let fxc = xc_plus.snap_up(rng).get_delta();
         NotNan::new((fxc-current).abs()).unwrap()
     }).collect();
     thresh.sort();
 
     let xc = points_grid.generate_xc_delta(rng);
-    let current = xc.grow_box_randomly(rng).get_delta();
+    let current = xc.snap_up(rng).get_delta();
 
     for (current_iteration, ((i, t), _)) in thresh.into_iter().enumerate().cartesian_product(0..i_tilde as u64).enumerate() {
         let current_iteration = (current_iteration + 1) as f64;
@@ -64,6 +65,13 @@ pub fn entry(point_set: Vec<Vec<NotNan<f64>>>, iterations: u64, rng: &mut Rng) {
         let k = K(k.map(|v| v as usize).collect());
         let mc: usize = (2.0 + current_iteration/total_iterations*(points_grid.d as f64 - 2.0)) as usize;
         let xc_plus = xc.generate_neighbor_delta(k, mc, rng);
-        let fxc = xc_plus.grow_box_randomly(rng).get_delta();
+        let fxc = xc_plus.snap_up(rng).get_delta();
     }
+}
+
+pub fn entry() {
+    let matches = command!()
+        .arg(arg!(-i --iterations ... "Number of Iterations"))
+        .arg(arg!(-n ... "Number of points"));
+
 }

@@ -1,6 +1,7 @@
 pub mod common;
-use common::hello;
+pub mod ta_shirink_delta;
+pub mod entrance;
 fn main() {
-    println!("Hello, world!");
-    hello(String::from("Alice"));
+    
 }
+
