@@ -34,7 +34,7 @@ fn check_points(raw_points: &Vec<Vec<NotNan<f64>>>) {
     });
 }
 
-fn get_raw_points() -> Vec<Vec<NotNan<f64>>> {
+pub fn get_raw_points() -> (Vec<Vec<NotNan<f64>>>, u64, u64) {
     let matches = Command::new("")
         .arg(
             arg!(iterations: -i --iterations [iterations] "Number of Iterations")
@@ -58,8 +58,7 @@ fn get_raw_points() -> Vec<Vec<NotNan<f64>>> {
     println!("Number of iterations: {}", iterations);
     println!("Dimension: {}", d);
     println!("Number of points: {}", n);
-    let mut rng = Rng::with_seed(seed);
     let raw_points = read_input(d, n);
     check_points(&raw_points);
-    raw_points
+    (raw_points, seed, iterations)
 }

@@ -2,11 +2,10 @@ use std::clone::Clone;
 
 use ordered_float::NotNan;
 use fastrand::Rng;
-use std::iter::{zip, repeat, repeat_with, Take, Repeat, RepeatWith};
+use std::iter::{zip, repeat, repeat_with};
 use itertools::izip;
 use std::cmp::Ordering;
 use std::cmp::Ord;
-use core::ptr;
 use crate::utils::into_iterator_with_permutation_unchecked;
 
 const ERROR_MSG_TOO_LOW: &'static str = "Smaller than the smallest point in the grid. Since the grid should contains 0, it means either the point is smaller than 0 or the grid is not properly constructed";
@@ -23,8 +22,8 @@ pub struct PointsGrid {
     pub points: Vec<Vec<NotNan<f64>>>,
     pub zeros: Vec<NotNan<f64>>,
     pub ones: Vec<NotNan<f64>>,
-    ordered_points: Vec<Vec<NotNan<f64>>>,
-    permutation: Vec<Vec<usize>>,
+    pub ordered_points: Vec<Vec<NotNan<f64>>>,
+    pub permutation: Vec<Vec<usize>>,
 }
 
 #[derive(Clone, Copy)]
