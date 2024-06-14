@@ -7,6 +7,7 @@ use itertools::izip;
 use std::cmp::Ordering;
 use std::cmp::Ord;
 use crate::utils::into_iterator_with_permutation_unchecked;
+use crate::utils::print_iterator;
 
 const ERROR_MSG_TOO_LOW: &'static str = "Smaller than the smallest point in the grid. Since the grid should contains 0, it means either the point is smaller than 0 or the grid is not properly constructed";
 const ERROR_MSG_TOO_HIGH: &'static str = "Larger than the largest point in the grid. Since the grid should contains 1, it means either the point is bigger than 1 or the grid is not properly constructed";
@@ -269,7 +270,6 @@ impl<'a> Point<'a> {
                     coord: reverse_iterator_with_permutation({
                         let yp = unsafe {into_iterator_with_permutation_unchecked(self.to_float().collect::<Vec<_>>(), &order)};
                         let yp = yp.collect::<Vec<_>>();
-                        println!("yp {:?}", yp);
                         let yp = yp.into_iter();
                         let yp_sn = iterator_with_permutation(&new_box.coord, &order);
                         izip!(repeat(x3i), x3, yp, yp_sn)
@@ -277,11 +277,9 @@ impl<'a> Point<'a> {
                             if !*found && *x >= *yp {
                                 *found = true;
                                 Some(Index::N(xi))
-                            } else if !*found {
-                                Some(*yp_sn)
                             } else {
-                                None
-                            }
+                                Some(*yp_sn)
+                            } 
                         })
                     }, &reverse_order),
                     points_grid: self.points_grid,
