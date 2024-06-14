@@ -60,5 +60,13 @@ pub fn get_raw_points() -> (Vec<Vec<NotNan<f64>>>, u64, u64) {
     println!("Number of points: {}", n);
     let raw_points = read_input(d, n);
     check_points(&raw_points);
-    (raw_points, seed, iterations)
+    let mut processed_points = Vec::<Vec<NotNan<f64>>>::with_capacity(n);
+    (0..d).for_each(|id| {
+        let mut points = Vec::<NotNan<f64>>::with_capacity(n);
+        raw_points.iter().for_each(|p| {
+            points.push(p[id]);
+        });
+        processed_points.push(points);
+    });
+    (processed_points, seed, iterations)
 }

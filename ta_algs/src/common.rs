@@ -26,7 +26,7 @@ pub struct PointsGrid {
     pub permutation: Vec<Vec<usize>>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Index {
     Zero,
     One,
@@ -166,7 +166,7 @@ impl<'a> RoughPoint<'a> {
 
 impl<'a> Point<'a> {
 
-    fn generate_neighbor_point<'b>(&'a self, k: &'a [usize], mc: usize, rng: &'a mut Rng) -> RoughPoint<>
+    pub fn generate_neighbor_point<'b>(&self, k: &'b [usize], mc: usize, rng: &'b mut Rng) -> RoughPoint<'a>
     where
         'a: 'b
     {
@@ -188,21 +188,6 @@ impl<'a> Point<'a> {
             coord: coord.collect(),
             points_grid: self.points_grid,
         }
-    }
-
-    pub fn generate_neighbor(&'a self, k: &'a [usize], mc: usize, rng: &'a mut Rng) -> (Point, Point, Point){
-        let point = self.generate_neighbor_point(k, mc, rng);
-        (point.round_point_up(), point.round_point_down(), point.round_point_extradown())
-    }
-
-    pub fn generate_neighbor_delta(&'a self, k: &'a[usize], mc: usize, rng: &'a mut fastrand::Rng) -> Point {
-        let point = self.generate_neighbor_point(k, mc, rng);
-        point.round_point_up()
-    }
-
-    pub fn generate_neighbor_bardelta(&'a self, k: &'a [usize], mc: usize, rng: &'a mut Rng) -> (Point, Point) {
-        let point = self.generate_neighbor_point(k, mc, rng);
-        (point.round_point_down(), point.round_point_up())
     }
 
     pub fn get_delta(&self) -> NotNan<f64> {
@@ -283,6 +268,9 @@ impl<'a> Point<'a> {
                 Point {
                     coord: reverse_iterator_with_permutation({
                         let yp = unsafe {into_iterator_with_permutation_unchecked(self.to_float().collect::<Vec<_>>(), &order)};
+                        let yp = yp.collect::<Vec<_>>();
+                        println!("yp {:?}", yp);
+                        let yp = yp.into_iter();
                         let yp_sn = iterator_with_permutation(&new_box.coord, &order);
                         izip!(repeat(x3i), x3, yp, yp_sn)
                         .scan(false, |found, (xi, x, yp, yp_sn)| {
@@ -341,13 +329,12 @@ impl<'a> Point<'a> {
 impl<'a> PointsGrid {
     
     pub fn new(points: Vec<Vec<NotNan<f64>>>) -> Self {
-        let n = points.len();
-        let d = points[0].len();
+        let d = points.len();
+        let n = points[0].len();
         let (ordered_points, permutation) = points.iter().map(|points| {
-            let mut indexed_points: Vec<_> = points.iter().enumerate().collect();
+            let mut indexed_points: Vec<_> = points.into_iter().map(|x| *x).enumerate().collect();
             indexed_points.sort_by_key(|x| x.1);
             let (permutation, ordered_points) = dedup_and_get_coord(indexed_points);
-            let ordered_points = ordered_points.into_iter().map(|(_, x)| *x).collect();
             (ordered_points, permutation)
         }).unzip();
         PointsGrid {
@@ -381,19 +368,8 @@ impl<'a> PointsGrid {
         order
     }
 
-    pub fn generate_xc(&'a self, rng: & mut Rng) -> (Point<'a>, Point<'a>, Point<'a>) {
-        let point = RoughPoint::new_random(&self, rng);
-        (point.round_point_up(), point.round_point_down(), point.round_point_extradown())
-    }
-
-    pub fn generate_xc_delta(&'a self, rng: & mut Rng) -> Point<'a> {
-        let point = RoughPoint::new_random(&self, rng);
-        point.round_point_up()
-    }
-
-    pub fn generate_xc_bardelta(&'a self, rng: & mut Rng) -> Point<'a> {
-        let point = RoughPoint::new_random(&self, rng);
-        point.round_point_up()
+    pub fn generate_random_point(&'a self, rng: &mut Rng) -> RoughPoint<'a> {
+        RoughPoint::new_random(&self, rng)
     }
 
     pub fn get_clipped<'b>(&'a self, i: impl Iterator<Item = &'a Index> + 'b, diff: impl Iterator<Item = &'b usize> + 'b, pm: PM) -> impl Iterator<Item = &'a NotNan<f64>> + 'b 
@@ -427,7 +403,9 @@ impl<'a> PointsGrid {
     }
 
     pub fn point_set(&self) -> impl Iterator<Item = (usize, impl Iterator<Item = &NotNan<f64>>)> {
-        (0..self.n).map(move |i| (i, (0..self.d).map(move |id| &self.points[id][i])))
+        (0..self.n).map(move |i| (i, (0..self.d).map(move |id| {
+            &self.points[id][i]
+        })))
     }
 
     pub fn point_set_with_permutation<'b>(&'a self, permutation: &'b [usize]) -> impl Iterator<Item = (usize, impl Iterator<Item = &'a NotNan<f64>> + 'b)> + 'b where 'a: 'b{
@@ -448,7 +426,6 @@ impl<'a> PointsGrid {
         let temp = (upper_bound.powi(d as i32) - lower_bound.powi(d as i32))*s + lower_bound.powi(d as i32);
         NotNan::new(temp.powf(1.0 / d as f64)).unwrap()
     }
-
   
     pub fn get_index_up<'b>(&'a self, v: impl Iterator<Item = RoughIndex> + 'b) -> impl Iterator<Item = Option<Index>> + 'b
     where
@@ -487,22 +464,21 @@ impl<'a> PointsGrid {
 }
 
 // remove duplicate from indexed elements and return the permutation
-pub fn dedup_and_get_coord<T: PartialEq>(mut stuff: Vec<(usize, T)>) -> (Vec<usize>, Vec<(usize, T)>) {
-    let mut resulting_map: Vec<usize> = Vec::with_capacity(stuff.len());
-    // TODO: check this actual does the correct thing
-    stuff.dedup_by(|a, b| {
-        match a.1 == b.1 {
-            true => {
-                resulting_map[b.0] = a.0;
-                true
-            },
-            false => {
-                resulting_map[b.0] = b.0;
-                false
+pub fn dedup_and_get_coord<T: PartialEq>(stuff: Vec<(usize, T)>) -> (Vec<usize>, Vec<T>) {
+    let mut order = Vec::<usize>::with_capacity(stuff.len());
+    let mut just_things = Vec::<T>::with_capacity(stuff.len());
+    stuff.into_iter().for_each(|(ii, vv)| {
+        if let Some(v) = just_things.last() {
+            if vv != *v {
+                order.push(ii);
+                just_things.push(vv);
             }
+        } else {
+            order.push(ii);
+            just_things.push(vv);
         }
     });
-    (resulting_map, stuff)
+    (order, just_things)
 }
 
 fn iterator_with_permutation<'b, T>(stuff: &'b [T], permutation: &'b [usize]) -> impl Iterator<Item = &'b T> + 'b {
@@ -510,20 +486,9 @@ fn iterator_with_permutation<'b, T>(stuff: &'b [T], permutation: &'b [usize]) ->
     iterator
 }
 
-fn into_iterator_with_permutation<'b, T: 'b>(mut stuff: Vec<T>, permutation: &'b [usize]) -> impl Iterator<Item = T> + 'b {
-    let iterator = permutation.iter().map(move |i| 
-        { 
-            let a = unsafe {
-                let ptr = &mut stuff[*i] as *mut T;
-                Box::<T>::from_raw(ptr)
-            };
-            *a
-        });
-    iterator
-}
-
 fn get_reveres_permutation(permutation: &[usize]) -> Vec<usize> {
     let mut reverse_permutation = Vec::with_capacity(permutation.len());
+    unsafe {reverse_permutation.set_len(permutation.len())}
     for (i, j) in permutation.iter().enumerate() {
         reverse_permutation[*j] = i;
     }
