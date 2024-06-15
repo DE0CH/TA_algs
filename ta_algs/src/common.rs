@@ -80,20 +80,26 @@ impl Index {
     }
     fn add(&self, diff: &usize, max: &usize) -> Option<Index> {
         let shifted_index = self.shift_index(max)?;
-        match shifted_index.checked_add(*diff)? {
-            max if max == max + 1 => Some(Index::One),
-            0 => Some(Index::Zero),
-            x => Some(Index::N(x-1)),
+        let result = shifted_index.checked_add(*diff)?;
+        if result >= max + 1{
+            Some(Index::One)
+        } else if result == 0 {
+            Some(Index::Zero)
+        } else {
+            Some(Index::N(result - 1))
         }
+
     }
     fn subtract(&self, diff: &usize, max: &usize) -> Option<Index> {
         let shifted_index = self.shift_index(max)?;
-        match shifted_index.checked_sub(*diff)? {
-            0 => Some(Index::Zero),
-            max if max == max + 1 => Some(Index::One),
-            x => Some(Index::N(x-1)),
+        let result = shifted_index.checked_sub(*diff)?;
+        if result <= 0 {
+            Some(Index::Zero)
+        } else if result == max + 1 {
+            Some(Index::One)
+        } else {
+            Some(Index::N(result - 1))
         }
-
     }
 }
 
@@ -151,7 +157,7 @@ impl<'a> RoughPoint<'a> {
     pub fn round_point_down(&self) -> Point<'a> {
         let points_grid = self.points_grid;
         Point {
-            coord: Self::round_point(self.get_index_up(), repeat(Index::Zero)).collect(),
+            coord: Self::round_point(self.get_index_down(), repeat(Index::N(points_grid.n-1))).collect(),
             points_grid
         }
     }
@@ -159,10 +165,13 @@ impl<'a> RoughPoint<'a> {
     pub fn round_point_extradown(&self) -> Point<'a> {
         let points_grid = self.points_grid;
         Point {
-            coord: Self::round_point(self.get_index_up(), repeat(Index::N(points_grid.n))).collect(),
-            points_grid
+            coord: Self::round_point(self.get_index_down(), self.points_grid.permutation.iter().map(|x| Index::N(x[0]))).collect(),
+            points_grid,
         }
     }
+
+
+    
 }
 
 impl<'a> Point<'a> {
@@ -215,14 +224,15 @@ impl<'a> Point<'a> {
 
     // is x in open box bounded by self?, since we are counting only points, we don't use Index for x, but just usize
     pub fn open(&self, x: impl Iterator<Item = &'a NotNan<f64>>) -> bool {
-        izip!(self.points_grid.zeros.iter(), self.points_grid.ones.iter(), x, self.coord.iter(), self.points_grid.points.iter()).all(|(zero, one, x, c, points)| {
+        let ans = izip!(self.points_grid.zeros.iter(), self.points_grid.ones.iter(), x, self.coord.iter(), self.points_grid.points.iter()).all(|(zero, one, x, c, points)| {
             let c: &NotNan<f64> = match c {
                 Index::Zero => zero,
                 Index::One => one,
                 Index::N(i) => &points[*i],
             };
             *x < *c
-        })
+        });
+        ans
     }
 
     pub fn closed(&self, x: impl Iterator<Item = &'a NotNan<f64>>) -> bool {
@@ -313,7 +323,7 @@ impl<'a> Point<'a> {
         })
     }
 
-    fn to_float(&'a self) -> impl Iterator<Item = &'a NotNan<f64>> + 'a {
+    pub fn to_float(&'a self) -> impl Iterator<Item = &'a NotNan<f64>> + 'a {
         izip!(self.points_grid.zeros.iter(), self.points_grid.ones.iter(), self.points_grid.points.iter(), self.coord.iter()).map(|(zero, one, points, i)| {
             match i {
                 Index::Zero => zero,
@@ -429,7 +439,7 @@ impl<'a> PointsGrid {
     where
         'a: 'b
     {
-        izip!(self.points.iter(), self.permutation.iter(), v).map(|(search_vector, permutation, v)| {
+        izip!(self.ordered_points.iter(), self.permutation.iter(), v).map(|(search_vector, permutation, v)| {
             match v {
                 RoughIndex::Float(v) => {
                     match get_index_up(search_vector, &v) {
@@ -446,7 +456,7 @@ impl<'a> PointsGrid {
     where
         'a: 'b
     {
-        izip!(self.points.iter(), self.permutation.iter(), v).map(|(search_vector, permutation, v)| {
+        izip!(self.ordered_points.iter(), self.permutation.iter(), v).map(|(search_vector, permutation, v)| {
             match v {
                 RoughIndex::Float(v) => {
                     match get_index_down(search_vector, &v) {
@@ -502,8 +512,7 @@ fn reverse_iterator_with_permutation<T>(iterator: impl Iterator<Item = T>, rever
     ans
 }
 
-// TODO: test the algorithms 
-fn get_index_up_with_cmp<T, P>(search_vector: &[T], mut cmp: P) -> Option<usize>
+pub fn get_index_up_with_cmp<T, P>(search_vector: &[T], mut cmp: P) -> Option<usize>
 where 
     P: FnMut(&T) -> Ordering
 {
@@ -523,15 +532,18 @@ where
             right = mid;
         }
     }
-    // Because of the guard at the beginning, it's guaranteed that left + 1 is within bounds. 
+    // ~~Because of the guard at the beginning, it's guaranteed that left + 1 is within bounds~~ I was wrong, if the length is one it will return out out bound (edge cases ughhhhhh). 
+    if left + 1 == search_vector.len() {
+        return None;
+    }
     Some(left + 1)
 }
 
-fn get_index_up<T: Ord>(search_vector: &[T], v: &T) -> Option<usize> {
+pub fn get_index_up<T: Ord>(search_vector: &[T], v: &T) -> Option<usize> {
     get_index_up_with_cmp(search_vector, |other| other.cmp(v))
 }
 
-fn get_index_down_with_cmp<T, P>(search_vector: &[T], mut cmp: P) -> Option<usize>
+pub fn get_index_down_with_cmp<T, P>(search_vector: &[T], mut cmp: P) -> Option<usize>
 where
     P: FnMut(&T) -> Ordering
 {
@@ -551,7 +563,7 @@ where
     Some(left)
 }
 
-fn get_index_down<T: Ord>(search_vector: &[T], v: &T) -> Option<usize> {
+pub fn get_index_down<T: Ord>(search_vector: &[T], v: &T) -> Option<usize> {
     get_index_down_with_cmp(search_vector, |other| other.cmp(v))
 }
 

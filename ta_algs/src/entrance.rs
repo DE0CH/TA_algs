@@ -4,8 +4,8 @@ use ordered_float::NotNan;
 use fastrand::Rng;
 use itertools::Itertools;
 
-fn read_input(d: usize, n:usize) -> Vec<Vec<NotNan<f64>>> {
-    (0..n).map(|i| {
+fn read_input(d: usize, n: usize) -> Vec<Vec<NotNan<f64>>> {
+    let ans = (0..n).map(|i| {
         let mut input = String::new();
         stdin().read_line(&mut input).expect(&format!("Failed to read line {}. Perhaps there aren't enough lines for {} points", i + 1, n));
         let point: Vec<_> = input.split_whitespace().map(|x| {
@@ -19,7 +19,15 @@ fn read_input(d: usize, n:usize) -> Vec<Vec<NotNan<f64>>> {
             panic!("Point line {} does not have the correct dimension", i + 1);
         }
         point
-    }).collect()
+    }).collect();
+    let mut input = String::new();
+    if let Ok(_) = stdin().read_line(&mut input) {
+        for x in input.split_whitespace() {
+            x.parse::<f64>()
+            .expect_err(&format!("There appears to be more numbers in the file after n (={}) lines", n));
+        }
+    }
+    ans
 }
 
 fn check_points(raw_points: &Vec<Vec<NotNan<f64>>>) {
