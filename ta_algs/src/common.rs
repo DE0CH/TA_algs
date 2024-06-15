@@ -34,42 +34,6 @@ pub enum Index {
     N(usize),
 }
 
-impl Ord for Index {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            (Index::Zero, Index::Zero) => Ordering::Equal,
-            (Index::Zero, Index::One) => Ordering::Less,
-            (Index::Zero, Index::N(_)) => Ordering::Less,
-            (Index::One, Index::Zero) => Ordering::Greater,
-            (Index::One, Index::One) => Ordering::Equal,
-            (Index::One, Index::N(_)) => Ordering::Less,
-            (Index::N(_), Index::Zero) => Ordering::Greater,
-            (Index::N(_), Index::One) => Ordering::Greater,
-            (Index::N(x), Index::N(y)) => x.cmp(y),
-        }
-    
-    }
-}
-
-impl PartialOrd for Index {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for Index {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Index::Zero, Index::Zero) => true,
-            (Index::One, Index::One) => true,
-            (Index::N(x), Index::N(y)) => x == y,
-            _ => false,
-        }
-    }
-}
-
-impl Eq for Index {}
-
 impl Index {
     fn shift_index(&self, max: &usize) -> Option<usize> {
         match self {
@@ -81,7 +45,7 @@ impl Index {
     fn add(&self, diff: &usize, max: &usize) -> Option<Index> {
         let shifted_index = self.shift_index(max)?;
         let result = shifted_index.checked_add(*diff)?;
-        if result >= max + 1{
+        if result - 1 >= *max {
             Some(Index::One)
         } else if result == 0 {
             Some(Index::Zero)
@@ -93,9 +57,9 @@ impl Index {
     fn subtract(&self, diff: &usize, max: &usize) -> Option<Index> {
         let shifted_index = self.shift_index(max)?;
         let result = shifted_index.checked_sub(*diff)?;
-        if result <= 0 {
+        if result == 0 {
             Some(Index::Zero)
-        } else if result == max + 1 {
+        } else if result - 1 == *max {
             Some(Index::One)
         } else {
             Some(Index::N(result - 1))
@@ -211,7 +175,8 @@ impl<'a> Point<'a> {
         let n = self.points_grid.n;
         let cl = self.count_closed();
         let vol = self.volume();
-        NotNan::new(cl as f64 / n as f64).unwrap() - vol
+        let ans = NotNan::new(cl as f64 / n as f64).unwrap() - vol;
+        ans
     }
 
     pub fn volume(&self) -> NotNan<f64> {
@@ -310,9 +275,9 @@ impl<'a> Point<'a> {
                     Point { 
                         coord: izip!(point.coord.iter(), point.to_float(), repeat(x2i), x2).map(|(pi, p, xi, x)| {
                             if *p > *x {
-                                Index::N(xi)
-                            } else {
                                 *pi
+                            } else {
+                                Index::N(xi)
                             }
                         }).collect(),
                         points_grid: self.points_grid,
