@@ -9,3 +9,6 @@ fastrand = "2.1.0"
 itertools = "0.13.0"
 ordered-float = "4.2.0"
 rand_chacha = "0.3.1"
+
+[profile.release]
+debug = true
