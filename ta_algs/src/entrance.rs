@@ -31,12 +31,12 @@ fn read_input(d: usize, n: usize) -> Vec<Vec<NotNan<f64>>> {
 }
 
 fn check_points(raw_points: &Vec<Vec<NotNan<f64>>>) {
-    raw_points.iter().for_each(|p| {
+    raw_points.iter().enumerate().for_each(|(i, p)| {
         p.iter().for_each(|x| {
             let one = NotNan::new(1.0).unwrap();
             let zero = NotNan::new(0.0).unwrap();
             if *x > one || *x < zero {
-                panic!("Point {} is not in the unit cube", x);
+                panic!("The {}'th point is not in the unit cube", i + 1);
             }
         })
     });
