@@ -1,13 +1,15 @@
 use clap::{arg, value_parser, Command};
 use std::io::stdin;
 use ordered_float::NotNan;
-use fastrand::Rng;
-use itertools::Itertools;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
-fn read_input(d: usize, n: usize) -> Vec<Vec<NotNan<f64>>> {
+fn read_input(input_file: &str, d: usize, n: usize) -> Vec<Vec<NotNan<f64>>> {
+    let file = File::open(input_file).unwrap();
+    let mut file = BufReader::new(file);
     let ans = (0..n).map(|i| {
         let mut input = String::new();
-        stdin().read_line(&mut input).expect(&format!("Failed to read line {}. Perhaps there aren't enough lines for {} points", i + 1, n));
+        file.read_line(&mut input).expect(&format!("Failed to read line {}. Perhaps there aren't enough lines for {} points", i + 1, n));
         let point: Vec<_> = input.split_whitespace().map(|x| {
             x.parse::<f64>()
             .expect(&format!("Failed parse floating point on line {}", i + 1))
@@ -20,8 +22,8 @@ fn read_input(d: usize, n: usize) -> Vec<Vec<NotNan<f64>>> {
         }
         point
     }).collect();
-    let mut input = String::new();
-    if let Ok(_) = stdin().read_line(&mut input) {
+    let mut input: String = String::new();
+    if let Ok(_) = file.read_line(&mut input) {
         for x in input.split_whitespace() {
             x.parse::<f64>()
             .expect_err(&format!("There appears to be more numbers in the file after n (={}) lines", n));
@@ -58,15 +60,18 @@ pub fn get_raw_points() -> (Vec<Vec<NotNan<f64>>>, u64, u64) {
         ).arg(
             arg!(n_points: <n_points> "Number of points")
             .value_parser(value_parser!(usize))
+        ).arg(
+            arg!(input: <input> "Input file")
         ).get_matches();
     let iterations = *matches.get_one::<u64>("iterations").unwrap();
     let d = *matches.get_one::<usize>("dimension").unwrap();
     let n = *matches.get_one::<usize>("n_points").unwrap();
     let seed = *matches.get_one::<u64>("seed").unwrap();
+    let input_file = matches.get_one::<String>("input").unwrap();
     println!("Number of iterations: {}", iterations);
     println!("Dimension: {}", d);
     println!("Number of points: {}", n);
-    let raw_points = read_input(d, n);
+    let raw_points = read_input(input_file, d, n);
     check_points(&raw_points);
     let mut processed_points = Vec::<Vec<NotNan<f64>>>::with_capacity(n);
     (0..d).for_each(|id| {
