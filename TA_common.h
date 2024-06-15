@@ -16,8 +16,6 @@ double *n_coords;
 double **coord;
 int **point_index;
 
-#define grow_box_randomly grow_box_newer
-
 // we want to use C library qsort to sort.  
 // I made a replacement stump
 void quicksort(int left, int right, double *arr);

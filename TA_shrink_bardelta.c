@@ -118,7 +118,7 @@ double oldmain(double **pointset, int n, int d)
   double fxc;
   int xc_index[d], xn_minus_index[d], xn_extraminus_index[d];
   int xn_best_index[d];    //Indices of current point, neighbour
-  double xglobal[trials+1][d], xbest[d];
+  double xbest[d];
   double current, global[trials+1], best, mean;  //current and global best values
   
   int outerloop=i_tilde, innerloop=i_tilde;     
@@ -305,13 +305,11 @@ double oldmain(double **pointset, int n, int d)
   
   //best calculated value 
   best=global[1];
-  for(j=0; j<d; j++) xbest[j]=xglobal[1][j];
   for(t=2;t<=trials;t++)
     {
       if(global[t]>best)
 	{ 
 	  best=global[t];
-	  for(j=0; j<d; j++) xbest[j]=xglobal[t][j];
 	}
     }
   

@@ -219,7 +219,6 @@ int point_critical_dimension(int *corner, int *point)
   return crit;
 }
 
-//void grow_box_newer(int *corner)
 void grow_box_randomly(int *corner)
 {
   int order[n_dimensions];
@@ -278,10 +277,10 @@ void snap_box(int *corner)
   for (i=0; i<n; i++)
     if (closed(point_index[i], corner))
       for (j=0; j<d; j++)
-	if (point_index[i][j] > max_idx[j])
-	  max_idx[j]=point_index[i][j];
-  for (i=0; i<d; i++)
-    corner[i] = (max_idx[i] < 0) ? 0 : max_idx[i];
+	      if (point_index[i][j] > max_idx[j])
+	        max_idx[j]=point_index[i][j];
+        for (i=0; i<d; i++)
+          corner[i] = (max_idx[i] < 0) ? 0 : max_idx[i];
 }
 
 
