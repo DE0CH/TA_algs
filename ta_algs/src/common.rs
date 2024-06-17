@@ -6,11 +6,6 @@ use std::iter::{zip, repeat, repeat_with};
 use itertools::izip;
 use std::cmp::Ordering;
 use std::cmp::Ord;
-use crate::utils::into_iterator_with_permutation_unchecked;
-use crate::utils::print_iterator;
-
-const ERROR_MSG_TOO_LOW: &'static str = "Smaller than the smallest point in the grid. Since the grid should contains 0, it means either the point is smaller than 0 or the grid is not properly constructed";
-const ERROR_MSG_TOO_HIGH: &'static str = "Larger than the largest point in the grid. Since the grid should contains 1, it means either the point is bigger than 1 or the grid is not properly constructed";
 
 pub enum PM {
     Add,
@@ -21,6 +16,7 @@ pub struct PointsGrid {
     pub d: usize,
     pub n: usize,
     pub points: Vec<Vec<NotNan<f64>>>,
+    pub points_transposed: Vec<Vec<NotNan<f64>>>,
     pub zeros: Vec<NotNan<f64>>,
     pub ones: Vec<NotNan<f64>>,
     pub ordered_points: Vec<Vec<NotNan<f64>>>,
@@ -135,7 +131,7 @@ impl<'a> RoughPoint<'a> {
     }
 
 
-    
+
 }
 
 impl<'a> Point<'a> {
@@ -150,7 +146,7 @@ impl<'a> Point<'a> {
         let lower_bound = self.get_clipped(k.iter(), PM::Subtract);
         let upper_bound = self.get_clipped(k.iter(), PM::Add);
         let s = repeat_with(|| rng.f64()).take(d).collect::<Vec<f64>>();
-        
+
         let coord = izip!(rand_coord, s, lower_bound, upper_bound, self.coord.iter()).map(|(rand_coord, s, lower_bound, upper_bound, i)| {
             if rand_coord {
                 RoughIndex::Float(self.points_grid.warp_with_pd(*lower_bound, *upper_bound, s))
@@ -214,7 +210,7 @@ impl<'a> Point<'a> {
     pub fn count_open(&self) -> usize {
         let xs = self.points_grid.point_set();
         xs.map(|(_, x)| {
-            if self.open(x) {1} else {0} 
+            if self.open(x) {1} else {0}
         }).fold(0, |a, b| a + b)
     }
 
@@ -225,13 +221,13 @@ impl<'a> Point<'a> {
         }).fold(0, |a, b| a + b)
     }
 
-    pub fn get_clipped<'b>(&'a self, diff: impl Iterator<Item = &'b usize> + 'b, pm: PM) -> impl Iterator<Item = &NotNan<f64>> + 'b 
-    where 
+    pub fn get_clipped<'b>(&'a self, diff: impl Iterator<Item = &'b usize> + 'b, pm: PM) -> impl Iterator<Item = &NotNan<f64>> + 'b
+    where
         'a: 'b
     {
         self.points_grid.get_clipped(self.coord.iter(), diff, pm)
     }
-    
+
     pub fn snap_up(&self, rng: &mut Rng) -> Point<'a> {
         let order = self.points_grid.get_permutation(rng);
         let reverse_order = get_reveres_permutation(&order);
@@ -239,22 +235,23 @@ impl<'a> Point<'a> {
         let xs = self.points_grid.point_set();
         let xs2 = self.points_grid.point_set();
         let xs3 = self.points_grid.point_set_with_permutation(&order);
+        let point_float: Vec<&NotNan<f64>> = self.to_float().collect();
         izip!(xs, xs2, xs3).fold(new_box, |new_box, ((_, x1), (_, x2), (x3i, x3))| {
             if !self.open(x1) && new_box.open(x2) {
                 Point {
                     coord: reverse_iterator_with_permutation({
-                        let yp = unsafe {into_iterator_with_permutation_unchecked(self.to_float().collect::<Vec<_>>(), &order)};
+                        let yp = iterator_with_permutation(&point_float, &order);
                         let yp = yp.collect::<Vec<_>>();
                         let yp = yp.into_iter();
                         let yp_sn = iterator_with_permutation(&new_box.coord, &order);
                         izip!(repeat(x3i), x3, yp, yp_sn)
                         .scan(false, |found, (xi, x, yp, yp_sn)| {
-                            if !*found && *x >= *yp {
+                            if !*found && *x >= **yp {
                                 *found = true;
                                 Some(Index::N(xi))
                             } else {
                                 Some(*yp_sn)
-                            } 
+                            }
                         })
                     }, &reverse_order),
                     points_grid: self.points_grid,
@@ -272,7 +269,7 @@ impl<'a> Point<'a> {
 
         zip(xs, xs2).fold(point, |point, ((_, x1), (x2i, x2))| {
                 if self.closed(x1) {
-                    Point { 
+                    Point {
                         coord: izip!(point.coord.iter(), point.to_float(), repeat(x2i), x2).map(|(pi, p, xi, x)| {
                             if *p > *x {
                                 *pi
@@ -300,7 +297,7 @@ impl<'a> Point<'a> {
 }
 
 impl<'a> PointsGrid {
-    
+
     pub fn new(points: Vec<Vec<NotNan<f64>>>) -> Self {
         let d = points.len();
         let n = points[0].len();
@@ -310,10 +307,14 @@ impl<'a> PointsGrid {
             let (permutation, ordered_points) = dedup_and_get_coord(indexed_points);
             (ordered_points, permutation)
         }).unzip();
+        let points_transposed: Vec<Vec<_>> = (0..n).map(|i| {
+            (0..d).map(|j| points[j][i]).collect()
+        }).collect();
         PointsGrid {
-            n, 
+            n,
             d,
             points,
+            points_transposed,
             ordered_points,
             permutation,
             zeros: vec![NotNan::new(0.0).unwrap(); d],
@@ -345,9 +346,9 @@ impl<'a> PointsGrid {
         RoughPoint::new_random(&self, rng)
     }
 
-    pub fn get_clipped<'b>(&'a self, i: impl Iterator<Item = &'a Index> + 'b, diff: impl Iterator<Item = &'b usize> + 'b, pm: PM) -> impl Iterator<Item = &'a NotNan<f64>> + 'b 
-    where 
-        'a: 'b 
+    pub fn get_clipped<'b>(&'a self, i: impl Iterator<Item = &'a Index> + 'b, diff: impl Iterator<Item = &'b usize> + 'b, pm: PM) -> impl Iterator<Item = &'a NotNan<f64>> + 'b
+    where
+        'a: 'b
     {
         izip!(self.zeros.iter(), self.ones.iter(), i, diff, self.points.iter()).map(move |(zero, one, i, diff, coord)| {
             match pm {
@@ -364,7 +365,7 @@ impl<'a> PointsGrid {
                 PM::Subtract => {
                     match i.subtract(diff, &coord.len()) {
                         Some(x) => match x {
-                            Index::One => one, 
+                            Index::One => one,
                             Index::Zero => zero,
                             Index::N(i) => &coord[i],
                         }
@@ -376,9 +377,9 @@ impl<'a> PointsGrid {
     }
 
     pub fn point_set(&self) -> impl Iterator<Item = (usize, impl Iterator<Item = &NotNan<f64>>)> {
-        (0..self.n).map(move |i| (i, (0..self.d).map(move |id| {
-            &self.points[id][i]
-        })))
+        self.points_transposed.iter().enumerate().map(|(i, points)| {
+            (i, points.iter())
+        })
     }
 
     pub fn point_set_with_permutation<'b>(&'a self, permutation: &'b [usize]) -> impl Iterator<Item = (usize, impl Iterator<Item = &'a NotNan<f64>> + 'b)> + 'b where 'a: 'b{
@@ -399,7 +400,7 @@ impl<'a> PointsGrid {
         let temp = (upper_bound.powi(d as i32) - lower_bound.powi(d as i32))*s + lower_bound.powi(d as i32);
         NotNan::new(temp.powf(1.0 / d as f64)).unwrap()
     }
-  
+
     pub fn get_index_up<'b>(&'a self, v: impl Iterator<Item = RoughIndex> + 'b) -> impl Iterator<Item = Option<Index>> + 'b
     where
         'a: 'b
@@ -478,7 +479,7 @@ fn reverse_iterator_with_permutation<T>(iterator: impl Iterator<Item = T>, rever
 }
 
 pub fn get_index_up_with_cmp<T, P>(search_vector: &[T], mut cmp: P) -> Option<usize>
-where 
+where
     P: FnMut(&T) -> Ordering
 {
     if cmp(search_vector.get(0)?) == Ordering::Greater {
@@ -497,7 +498,7 @@ where
             right = mid;
         }
     }
-    // ~~Because of the guard at the beginning, it's guaranteed that left + 1 is within bounds~~ I was wrong, if the length is one it will return out out bound (edge cases ughhhhhh). 
+    // ~~Because of the guard at the beginning, it's guaranteed that left + 1 is within bounds~~ I was wrong, if the length is one it will return out out bound (edge cases ughhhhhh).
     if left + 1 == search_vector.len() {
         return None;
     }

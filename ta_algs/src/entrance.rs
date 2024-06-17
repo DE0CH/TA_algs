@@ -1,5 +1,4 @@
 use clap::{arg, value_parser, Command};
-use std::io::stdin;
 use ordered_float::NotNan;
 use std::fs::File;
 use std::io::{BufRead, BufReader};

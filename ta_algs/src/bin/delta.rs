@@ -11,7 +11,7 @@ pub fn trial(points_grid: PointsGrid, iterations: u64, rng: &mut Rng) -> (Vec<In
         let current_iteration = (i+1) as f64;
         let i_tilde = i_tilde as f64;
         let k = points_grid.ordered_points.iter().map(|points| {
-            ((points.len()-1) as f64)/2.0 * (i_tilde-current_iteration)/i_tilde + current_iteration/i_tilde 
+            ((points.len()-1) as f64)/2.0 * (i_tilde-current_iteration)/i_tilde + current_iteration/i_tilde
         });
         let k: Vec<_> = k.map(|v| v as usize).collect();
         let mc: usize = (2.0 + current_iteration/i_tilde*(points_grid.d as f64 - 2.0)) as usize;
@@ -50,7 +50,7 @@ pub fn trial(points_grid: PointsGrid, iterations: u64, rng: &mut Rng) -> (Vec<In
             } else {
                 (xc, global, current)
             }
-        }    
+        }
     );
     let (xc, global, current) = ans;
     let xc = xc.coord;
