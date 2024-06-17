@@ -40,7 +40,7 @@ int k_div=0;// "0" means default "4 or 8" setup, other value (from main(), e.g. 
 #define I_TILDE 316    // thresholds to be calculated (sqrt(iterations)), default value 100k
 int mc=MC;             //nbr of coordinates to be changed, default value
 int i_tilde=I_TILDE;
-#define TRIALS 10      //nbr of runs (mean and max will be calculated), default value
+#define TRIALS 1    //nbr of runs (mean and max will be calculated), default value
 int trials=TRIALS;
 
 
@@ -440,4 +440,3 @@ int main(int argc, char **argv)
   return EXIT_SUCCESS;
 
 }
-
