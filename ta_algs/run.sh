@@ -1,3 +1,5 @@
+#!/bin/bash -e
+
 FILE=$1
 FIRST_LINE=$(head -n 1 $FILE)
 D=$(echo $FIRST_LINE | cut -d ' ' -f 1)
