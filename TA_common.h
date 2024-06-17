@@ -11,10 +11,10 @@
 //#define DISPLAY_CANDIDATES
 //#define PRINT_RANGE_DATA
 
-int n_dimensions, n_points;
-double *n_coords;
-double **coord;
-int **point_index;
+extern int n_dimensions, n_points;
+extern double *n_coords;
+extern double **coord;
+extern int **point_index;
 
 // we want to use C library qsort to sort.  
 // I made a replacement stump
