@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "delta debug",
+            "program": "${workspaceRoot}/ta_algs/target/debug/delta",
+            "args": ["5", "50", "${workspaceRoot}/EVALS/Notsorted/Disc_EVAL_ReverseHalton_5_50 copy.txt"],
+            "cwd": "${workspaceRoot}",
+            "sourceLanguages": [
+                "rust"
+            ]
+        }
+    ]
+}
