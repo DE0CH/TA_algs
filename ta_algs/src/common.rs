@@ -231,33 +231,43 @@ impl<'a> Point<'a> {
         let xs2 = self.points_grid.point_set();
         let xs3 = self.points_grid.point_set();
 
-        let mut new_box = self.points_grid.new_max_index();
+        let yp_sn = self.points_grid.new_max_index();
+
+        let yp_sn: Vec<_> = yp_sn.get_order().collect();
+        let mut yp_sn: Vec<_> = iterator_with_permutation(&yp_sn, &coordinate_order).copied().collect();
+
+
+        let point_order = |x: PointIndex| {
+            let x = coordinate_order.iter().copied().map(move |id| self.points_grid.order[id][x.0]);
+            x
+        };
+
+        let is_in_open_box = |x: PointIndex, corner: &Vec<PointOrder>| -> bool {
+            let x = point_order(x);
+            zip(x, corner.iter().copied()).all(|(x, corner)| x < corner)
+        };
+
+        let yp: Vec<_> = self.get_order().collect();
+        let yp: Vec<_> = iterator_with_permutation(&yp, &coordinate_order).copied().collect();
 
         for (x1, x2, x3) in izip!(xs1, xs2, xs3) {
-            if !self.open(x1) && new_box.open(x2) {
-                let yp_point_order: Vec<_> = new_box.get_order().collect();
-                let yp_sn = iterator_with_permutation(&yp_point_order, &coordinate_order);
-                let yp = iterator_with_permutation(&yp_point_order, &coordinate_order);
-                let x3_point_order: Vec<_> = self.points_grid.point_order(x3).collect();
-                let x = iterator_with_permutation(&x3_point_order, &coordinate_order);
+            if !self.open(x1) && is_in_open_box(x2, &yp_sn){
+                let x = point_order(x3);
 
-                // OPTIMIZATION: update in place, though I suspect it will already be optimized by the compiler
-                let new = izip!(x, yp, yp_sn).scan(false, |found, (x, yp, yp_sn)| {
-                    if !*found && x >= yp {
-                        *found = true;
-                        Some(*x)
-                    } else {
-                        Some(*yp_sn)
+                let mut found = false;
+                for (x, yp_sn, yp) in izip!(x, yp_sn.iter_mut(), yp.iter().copied()) {
+                    if !found && x >= yp {
+                        found = true;
+                        *yp_sn = x;
                     }
-                });
-
-                // OPTIMIZATION: don't do this every time
-                let new = reverse_iterator_with_permutation(new, &coordinate_order).into_iter().map(|x| x.unwrap());
-                new_box = Point::new_from_order(new, self.points_grid);
+                }
             }
         }
 
-        new_box
+        let yp_sn = reverse_iterator_with_permutation(yp_sn.iter().copied(), &coordinate_order);
+        let yp_sn = yp_sn.into_iter().map(|x| x.unwrap());
+        Point::new_from_order(yp_sn, self.points_grid)
+
     }
 
     pub fn snap_down(&self) -> Point<'a> {
