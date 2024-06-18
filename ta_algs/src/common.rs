@@ -227,7 +227,6 @@ impl<'a> Point<'a> {
 
     pub fn snap_up(&self, rng: &mut Rng) -> Point<'a> {
         let coordinate_order = self.points_grid.get_permutation(rng);
-        let reverse_order: Vec<_> = get_reveres_permutation(&coordinate_order).into_iter().map(|x| x.unwrap()).collect();
         let xs1 = self.points_grid.point_set();
         let xs2 = self.points_grid.point_set();
         let xs3 = self.points_grid.point_set();
@@ -253,7 +252,7 @@ impl<'a> Point<'a> {
                 });
 
                 // OPTIMIZATION: don't do this every time
-                let new = reverse_iterator_with_permutation(new, &reverse_order).into_iter().map(|x| x.unwrap());
+                let new = reverse_iterator_with_permutation(new, &coordinate_order).into_iter().map(|x| x.unwrap());
                 new_box = Point::new_from_order(new, self.points_grid);
             }
         }
@@ -297,7 +296,9 @@ impl<'a> PointsGrid {
             points
         }).collect();
         let (ordered_points, reverse_order, order): (Vec<_>, Vec<Vec<PointIndex>>, Vec<Vec<PointOrder>>) = points.clone().into_iter().map(|points| {
-            let indexed_points: Vec<_> = points.into_iter().enumerate().collect();
+            let mut indexed_points: Vec<_> = points.into_iter().enumerate().collect();
+            indexed_points.sort_by_key(|x| x.1);
+
             let (points, reverse_order, order) = dedup_and_get_coord(indexed_points);
             let reverse_order = reverse_order.into_iter().map(|x| PointIndex(x)).collect();
             let order = order.into_iter().map(|x| PointOrder(x)).collect();
@@ -370,8 +371,8 @@ impl<'a> PointsGrid {
 // remove duplicate from indexed elements and return the permutation
 pub fn dedup_and_get_coord<T: PartialEq>(stuff: Vec<(usize, T)>) -> (Vec<T>, Vec<usize>, Vec<usize>) {
     let mut reverse_order = Vec::<usize>::with_capacity(stuff.len());
-    let mut order = Vec::<usize>::with_capacity(stuff.len());
     let mut just_things = Vec::<T>::with_capacity(stuff.len());
+    let mut order: Vec<Option<usize>> = repeat_with(|| None).take(stuff.len()).collect();
     stuff.into_iter().for_each(|(ii, vv)| {
         if let Some(v) = just_things.last() {
             if vv != *v {
@@ -382,9 +383,9 @@ pub fn dedup_and_get_coord<T: PartialEq>(stuff: Vec<(usize, T)>) -> (Vec<T>, Vec
             reverse_order.push(ii);
             just_things.push(vv);
         }
-        order.push(reverse_order.len() - 1);
+        order[ii] = Some(reverse_order.len() - 1);
     });
-    (just_things, reverse_order, order)
+    (just_things, reverse_order, order.into_iter().map(|x| x.unwrap()).collect())
 }
 
 fn iterator_with_permutation<'b, T>(stuff: &'b [T], permutation: &'b [usize]) -> impl Iterator<Item = &'b T> + 'b {
@@ -392,16 +393,8 @@ fn iterator_with_permutation<'b, T>(stuff: &'b [T], permutation: &'b [usize]) ->
     iterator
 }
 
-fn get_reveres_permutation(permutation: &[usize]) -> Vec<Option<usize>> {
-    let mut reverse_permutation = vec![None; permutation.len()];
-    for (i, j) in permutation.iter().enumerate() {
-        reverse_permutation[*j] = Some(i);
-    }
-    reverse_permutation
-}
-
 fn reverse_iterator_with_permutation<T>(iterator: impl Iterator<Item = T>, reverse_permutation: &[usize]) -> Vec<Option<T>> {
-    let mut ans = std::iter::repeat_with(|| Option::<T>::None).take(reverse_permutation.len()).collect::<Vec<_>>();
+    let mut ans = repeat_with(|| Option::<T>::None).take(reverse_permutation.len()).collect::<Vec<_>>();
     for (i, v) in iterator.enumerate() {
         ans[reverse_permutation[i]] = Some(v);
     }
