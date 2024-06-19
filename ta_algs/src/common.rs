@@ -59,6 +59,15 @@ impl<'a> RoughPoint<'a> {
         }
     }
 
+    pub fn float(&'a self) -> impl Iterator<Item = NotNan<f64>> + 'a {
+        zip(self.points_grid.points.iter(), self.coord.iter()).map(|(points, index)| {
+            match index {
+                RoughIndex::Index(i) => points[i.0],
+                RoughIndex::Float(f) => *f,
+            }
+        })
+    }
+
     pub fn round_up(&self) -> Point<'a> {
         let coord = zip(self.coord.iter(), self.points_grid.ordered_points.iter()).map(|(x, ordered_points)| {
             match x {
