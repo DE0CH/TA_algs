@@ -55,6 +55,8 @@ fn main() {
         let point = Point::new(point, &points_grid);
         let delta = point.get_delta();
         let bardelta = point.get_bardelta();
+        let bardelta2 = (count_closed(&point) as f64 / points_grid.n as f64) - *volume(&point);
+        assert_eq!(bardelta, bardelta2);
         (delta, bardelta)
     }).unzip();
 

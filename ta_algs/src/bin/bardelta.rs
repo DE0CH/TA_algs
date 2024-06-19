@@ -63,6 +63,6 @@ fn main() {
     let (points, seed, iterations) = entrance::get_raw_points();
     let mut rng = fastrand::Rng::with_seed(seed);
     let points = PointsGrid::new(points);
-    let (_a, b, c) = trial(points, iterations, &mut rng);
-    println!("The best point has a global delta of {} and a current delta of {}", b, c);
+    let (_a, b, _c) = trial(points, iterations, &mut rng);
+    println!("{}", b);
 }
