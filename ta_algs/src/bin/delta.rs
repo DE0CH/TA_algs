@@ -1,6 +1,5 @@
 use ordered_float::NotNan;
 use ta_algs::common::PointsGrid;
-use ta_algs::common::Point;
 use ta_algs::common::PointIndex;
 use fastrand::Rng;
 use itertools::Itertools;
@@ -61,12 +60,7 @@ pub fn trial(points_grid: PointsGrid, iterations: u64, rng: &mut Rng) -> (Vec<Po
 fn main() {
     let (points, seed, iterations) = entrance::get_raw_points();
     let mut rng = fastrand::Rng::with_seed(seed);
-    let points2 = points.clone();
     let points = PointsGrid::new(points);
-    let (a, b, c) = trial(points, iterations, &mut rng);
-    println!("The best point is {:?} with a global delta of {:?} and a current delta of {:?}", a, b, c);
-    let points2 = PointsGrid::new(points2);
-    let a = Point::new(a, &points2);
-    let coordinate = a.float().collect::<Vec<_>>();
-    println!("The best point in the original coordinate system is {:?}", coordinate);
+    let (_a, b, c) = trial(points, iterations, &mut rng);
+    println!("The best point has a global delta of {} and a current delta of {}", b, c);
 }
