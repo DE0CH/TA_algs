@@ -69,12 +69,13 @@ impl<'a> RoughPoint<'a> {
     }
 
     pub fn round_up(&self) -> Point<'a> {
-        let coord = zip(self.coord.iter(), self.points_grid.ordered_points.iter()).map(|(x, ordered_points)| {
+        let coord = izip!(self.coord.iter(), self.points_grid.ordered_points.iter(), self.points_grid.reverse_order.iter()).map(|(x, ordered_points, reverse_order)| {
             match x {
                 RoughIndex::Index(i) => *i,
                 RoughIndex::Float(f) => {
                     let ans = get_index_up(&ordered_points, &f).expect(ERROR_MSG_TOO_HIGH);
-                    PointIndex(ans)
+                    let ans = reverse_order[ans];
+                    ans
                 }
             }
         }).collect();
@@ -85,12 +86,13 @@ impl<'a> RoughPoint<'a> {
     }
 
     pub fn round_down(&self) -> Point<'a> {
-        let coord = zip(self.coord.iter(), self.points_grid.ordered_points.iter()).map(|(x, ordered_points)| {
+        let coord = izip!(self.coord.iter(), self.points_grid.ordered_points.iter(), self.points_grid.reverse_order.iter()).map(|(x, ordered_points, reverse_order)| {
             match x {
                 RoughIndex::Index(i) => *i,
                 RoughIndex::Float(f) => {
                     let ans = get_index_down(&ordered_points, &f).expect(ERROR_MSG_TOO_LOW);
-                    PointIndex(ans)
+                    let ans = reverse_order[ans];
+                    ans
                 }
             }
         }).collect();
