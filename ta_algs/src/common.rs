@@ -387,6 +387,22 @@ impl<'a> PointsGrid {
             + lower_bound.powi(d as i32);
         NotNan::new(temp.powf(1.0 / d as f64)).unwrap()
     }
+
+    pub fn get_mc(&self, current_iteration: usize, total_iteration: usize) -> usize {
+        let current_iteration = (current_iteration + 1) as f64;
+        let total_iteration = total_iteration as f64;
+        (2.0 + current_iteration/total_iteration*(self.d as f64 - 2.0)) as usize
+    }
+
+    pub fn get_k(&'a self, current_iteration: usize, total_iteration:usize) -> impl Iterator<Item = usize> + 'a {
+        let current_iteration = (current_iteration + 1) as f64;
+        let total_iteration = total_iteration as f64;
+        let ans = self.ordered_points.iter().map(move |points| {
+            ((points.len()-1) as f64)/(2.0 as f64) * (total_iteration-current_iteration)/total_iteration + current_iteration/total_iteration
+        }).map(|x| x as usize);
+        ans
+    }
+
 }
 
 // remove duplicate from indexed elements and return the permutation
