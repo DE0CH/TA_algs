@@ -111,7 +111,7 @@ double oldmain(double **pointset, int n, int d)
 
   int i, j, p, t; // loop variables
 
-  double thresh[i_tilde]; // Thresholdsequence
+  double thresh[i_tilde + 1]; // Thresholdsequence
   double T;               // current Threshold
 
   double fxc;
