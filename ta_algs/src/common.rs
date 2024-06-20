@@ -29,6 +29,7 @@ pub struct PointsGrid {
     pub ordered_points: Vec<Vec<NotNan<f64>>>,
     pub reverse_order: Vec<Vec<PointIndex>>,
     pub order: Vec<Vec<PointOrder>>,
+    pub has_zero: Vec<bool>,
 }
 
 #[derive(Clone, Copy)]
@@ -86,13 +87,17 @@ impl<'a> RoughPoint<'a> {
     }
 
     pub fn round_down(&self) -> Point<'a> {
-        let coord = izip!(self.coord.iter(), self.points_grid.ordered_points.iter(), self.points_grid.reverse_order.iter()).map(|(x, ordered_points, reverse_order)| {
+        let coord = izip!(self.coord.iter(), self.points_grid.ordered_points.iter(), self.points_grid.reverse_order.iter(), self.points_grid.has_zero.iter()).map(|(x, ordered_points, reverse_order, has_zero)| {
             match x {
                 RoughIndex::Index(i) => *i,
                 RoughIndex::Float(f) => {
                     let ans = get_index_down(&ordered_points, &f).expect(ERROR_MSG_TOO_LOW);
-                    let ans = reverse_order[ans];
-                    ans
+                    let ans = if ans == 0 && !*has_zero {
+                        1
+                    } else {
+                        ans
+                    };
+                    reverse_order[ans]
                 }
             }
         }).collect();
@@ -310,6 +315,10 @@ impl<'a> PointsGrid {
         let n = points[0].len();
         let zero = NotNan::new(0.0).unwrap();
         let one = NotNan::new(1.0).unwrap();
+        let has_zero: Vec<_> = points.iter().map(|points| {
+            let has_zero = points.iter().any(|x| x == &zero);
+            has_zero
+        }).collect();
         let points: Vec<Vec<NotNan<f64>>> = points.iter().map(|points| {
             let zero = once(zero);
             let one = once(one);
@@ -332,6 +341,7 @@ impl<'a> PointsGrid {
             ordered_points,
             order,
             reverse_order,
+            has_zero,
         }
     }
 
