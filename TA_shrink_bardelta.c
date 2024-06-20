@@ -129,7 +129,6 @@ double oldmain(double **pointset, int n, int d)
   
   //Get pointset from external file
   FILE *datei_ptr=stderr;
-  fprintf(datei_ptr,"GLP-Menge %d %d  ",d,n);
   
   //Sort the grid points, setup global variables
   process_coord_data(pointset, n, d);
@@ -137,8 +136,6 @@ double oldmain(double **pointset, int n, int d)
   //Algorithm starts here
   for(t=1;t<=trials;t++)
     { //Initialization
-      fprintf(stderr, "Trial %d/%d\n", t, trials);
-
       //Initialize k-value
       for (j=0; j<d; j++) {
 	start[j]=(int)((n_coords[j]-1)/2);
@@ -217,80 +214,35 @@ double oldmain(double **pointset, int n, int d)
 	      current_iteration++;
 	      
 	      //Update k-value
-#ifdef PRINT_RANGE_DATA
-	      if (p==1)
-		fprintf(stderr, "Snapshot: range ");
-#endif
 	      for (j=0; j<d; j++) {
 		k[j] = start[j]*(((double)innerloop*outerloop-current_iteration)/(innerloop*outerloop)) +
 		  1*((double)current_iteration/(innerloop*outerloop));
 		  //		k[j]=(int)(start[j]-(int)(current_iteration/(innerloop*outerloop)*(start[j]-1)));
-#ifdef PRINT_RANGE_DATA
-		if (p==1)
-		  fprintf(stderr, "%d ", k[j]);
-#endif
 	      }
 
 	      //Update mc-value
 	      mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
-#ifdef PRINT_RANGE_DATA
-	      if (p==1)
-		fprintf(stderr, " threshold %g mc %d\n", T, mc);
-#endif
 	      //mc=2;
 
 	      //Get random neighbor
 	      generate_neighbor_bardelta(xn_minus_index, xn_extraminus_index, xc_index,k,mc);
-#ifdef DISPLAY_CANDIDATES
-	      fprintf(stderr, "Old: ");
-	      for (j=0; j<d; j++)
-		fprintf(stderr, "%d ", xc_index[j]);	    
-	      fprintf(stderr, "\nMinus: ");
-	      for (j=0; j<d; j++)
-		fprintf(stderr, "%d ", xn_minus_index[j]);
-	      fprintf(stderr, "\nXMinus: ");
-	      for (j=0; j<d; j++)
-		fprintf(stderr, "%d ", xn_extraminus_index[j]);
-	      fprintf(stderr, "\n");
-#endif
 
 	      //(Possibly) Snap the points and compute the best of the rounded points 
 	      fxc = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xn_best_index);
-#ifdef PRINT_UPDATE_CANDIDATES
-	      fprintf(stderr, "Iter. %d candidate %10g (vs %10g best %10g) -- ",
-		      current_iteration, fxc, current, global[t]);
-#endif
 	      //Global update if necessary
 	      if(fxc>global[t]){
 		global_switches[t]++;
 		global[t]=fxc;
 		when=current_iteration;
-#ifdef PRINT_UPDATE_CANDIDATES
-		fprintf(stderr, "global ");
-#endif
-#ifdef PRINT_ALL_UPDATES
-		fprintf(stderr, "%g at %d :", fxc, current_iteration);
-		for (j=0; j<d; j++)
-		  fprintf(stderr, " %d", xn_best_index[j]);
-		fprintf(stderr, "\n");
-#endif
 	      }
 	      //Update of current best value if necessary
 	      if(fxc-current>=T){
-#ifdef PRINT_UPDATE_CANDIDATES
-		fprintf(stderr, "update\n");
-#endif
 		switches[t]++;
 		current=fxc;
 		for(j=0; j<d; j++){
 		  xc_index[j]=xn_best_index[j];
 		}
 	      }
-#ifdef PRINT_UPDATE_CANDIDATES
-	      else {
-		fprintf(stderr, "skip\n");
-	      }
-#endif
 	    }//innerloop
 	}//outerloop
       if (real_max_discr > global[t]) {
