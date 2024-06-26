@@ -67,9 +67,6 @@ pub fn get_raw_points() -> (Vec<Vec<NotNan<f64>>>, u64, u64) {
     let n = *matches.get_one::<usize>("n_points").unwrap();
     let seed = *matches.get_one::<u64>("seed").unwrap();
     let input_file = matches.get_one::<String>("input").unwrap();
-    println!("Number of iterations: {}", iterations);
-    println!("Dimension: {}", d);
-    println!("Number of points: {}", n);
     let raw_points = read_input(input_file, d, n);
     check_points(&raw_points);
     let mut processed_points = Vec::<Vec<NotNan<f64>>>::with_capacity(n);

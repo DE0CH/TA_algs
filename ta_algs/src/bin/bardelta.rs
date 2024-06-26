@@ -1,6 +1,5 @@
 use ordered_float::NotNan;
 use ta_algs::common::PointsGrid;
-use ta_algs::common::Point;
 use ta_algs::common::PointIndex;
 use fastrand::Rng;
 use itertools::Itertools;

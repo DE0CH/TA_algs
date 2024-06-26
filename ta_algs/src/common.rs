@@ -43,6 +43,7 @@ pub struct RoughPoint<'a> {
     pub points_grid: &'a PointsGrid,
 }
 
+#[derive(Clone)]
 pub struct Point<'a> {
     pub coord: Vec<PointIndex>,
     pub points_grid: &'a PointsGrid,
