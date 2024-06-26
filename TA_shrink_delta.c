@@ -1,4 +1,4 @@
-/* 
+/*
    reads a point set and computes a lower bound on its star discrepancy
 */
 
@@ -52,7 +52,7 @@ int current_iteration;
 //Copies the appropriate "thing" into xc_index (output variable)
 double best_of_rounded_delta(int *xn_plus)
 {
-  double fxc;  
+  double fxc;
   int j, d=n_dimensions;
   int xn_plus_grow[d];
 
@@ -75,31 +75,31 @@ double best_of_rounded_delta(int *xn_plus)
 double oldmain(double **pointset, int n, int d)
 {
   int k[d], start[d];
-  
+
   int i, j, p, t;           // loop variables
-  
+
   double thresh[i_tilde + 1];    //Thresholdsequence
   double T;                            //current Threshold
-  
+
   double fxc;
   int xc_index[d], xn_plus_index[d];
   int xn_best_index[d];    //Indices of current point, neighbour
   double xbest[d];
   double current, global[trials+1], best, mean;  //current and global best values
-  
-  const int outerloop=i_tilde, innerloop=i_tilde;     
-  
+
+  const int outerloop=i_tilde, innerloop=i_tilde;
+
   int anzahl=0;
-  int switches[trials+1]; 
-  int global_switches[trials+1];    
-  
+  int switches[trials+1];
+  int global_switches[trials+1];
+
   //Get pointset from external file
   FILE *datei_ptr=stderr;
   fprintf(datei_ptr,"GLP-Menge %d %d  ",d,n);
-  
+
   //Sort the grid points, setup global variables
   process_coord_data(pointset, n, d);
-  
+
   //Algorithm starts here
   for(t=1;t<=trials;t++) { //Initialization
     fprintf(stderr, "Trial %d/%d\n", t, trials);
@@ -129,18 +129,18 @@ double oldmain(double **pointset, int n, int d)
 
 
       //generation of random point xc
-      generate_xc_delta(xc_index); 
-      
+      generate_xc_delta(xc_index);
+
       //(Possibly) Snaps the point upwards and computes the fitness
       current = best_of_rounded_delta(xc_index);
-        
+
       //draw a neighbour of xc
       generate_neighbor_delta(xn_plus_index, xc_index, k, mc);
-      
+
       //Compute the threshold
       fxc=best_of_rounded_delta(xn_plus_index);
       thresh[i]=0.0-fabs(fxc-current);
-    }	
+    }
 
     //sort the thresholds in increasing order
     quicksort(1,outerloop,thresh);
@@ -162,21 +162,21 @@ double oldmain(double **pointset, int n, int d)
     mc=2+(int)(current_iteration/(innerloop*outerloop)*(d-2));
 
 
-    //draw a random initial point 
+    //draw a random initial point
     generate_xc_delta(xc_index);
-  
+
     //(Possibly) Snap and compute the best of the rounded points and update current value
     current = best_of_rounded_delta(xc_index);
-    
+
     global[t] = current;
 
     current_iteration=0;
     for(i=1;i<=outerloop;i++) {
       T=thresh[i];
-      
+
       for(p=1;p<=innerloop;p++) {
         current_iteration++;
-        
+
         //Update k-value
         for (j=0; j<d; j++) {
           k[j] = start[j]*(((double)innerloop*outerloop-current_iteration)/(innerloop*outerloop)) +
@@ -191,7 +191,7 @@ double oldmain(double **pointset, int n, int d)
         //Get random neighbor
         generate_neighbor_delta(xn_plus_index, xc_index,k,mc);
 
-        //(Possibly) Snap the points and compute the best of the rounded points 
+        //(Possibly) Snap the points and compute the best of the rounded points
         fxc = best_of_rounded_delta(xn_plus_index);
         //Global update if necessary
         if(fxc>global[t]){
@@ -218,24 +218,24 @@ double oldmain(double **pointset, int n, int d)
     fprintf(stdout, "%g\n", global[t]); // To simplify post-execution bookkeeping
   }//trials
 
-  //best calculated value 
+  //best calculated value
   best=global[1];
   for(t=2;t<=trials;t++) {
-    if(global[t]>best) { 
+    if(global[t]>best) {
       best=global[t];
     }
   }
-  
+
   for(t=1;t<=trials;t++) {
     if(global[t]==best) anzahl++;
   }
   fprintf(datei_ptr,"best %e  ",best);
   // for(j=0; j<d; j++)  fprintf(datei_ptr,"xbest %d coo  %e\n", j,xbest[j]);
-  
+
   //delta or bar(delta) causing best value?
   //if(best==fabs(delta(xbest,GLP))) fprintf(datei_ptr,"delta\n");
   //else fprintf(datei_ptr,"bar_delta\n");
-  
+
   //calculation of mean value
   mean=0;
   for(t=1;t<=trials;t++) mean=mean+global[t];
@@ -243,20 +243,20 @@ double oldmain(double **pointset, int n, int d)
   fprintf(datei_ptr,"mean %e  ",mean);
   //fprintf(datei_ptr,"lower_bound %e\n",lower_bound);
   //fprintf(datei_ptr,"upper_bound %e\n",upper_bound);
-  
+
   //  fprintf(datei_ptr,"Anzahl der Iterationen: %d  ",iteration_count);
   //fprintf(datei_ptr,"Wert von k: %d\n",k);
   // fprintf(datei_ptr,"Wert von Extraminus: %d\n",extraminus);
   fprintf(datei_ptr,"Anzahl best: %d\n",anzahl);
-  // for(i=1;i<=outerloop;i++) fprintf(datei_ptr,"Thresh %d = %e\n",i,thresh[i]);  
-  
-  // for(t=1;t<=trials;t++) { 
+  // for(i=1;i<=outerloop;i++) fprintf(datei_ptr,"Thresh %d = %e\n",i,thresh[i]);
+
+  // for(t=1;t<=trials;t++) {
   //fprintf(datei_ptr,"Anzahl switches in Runde %d: %d\n",t,switches[t]);
   //fprintf(datei_ptr,"Anzahl global_switches in Runde %d: %d\n",t,global_switches[t]);
   //}
-  
+
   return best;
-  
+
 }
 
 
@@ -279,7 +279,7 @@ int main(int argc, char **argv)
       fprintf(stderr, "Using k = n/%d\n", k_div);
     }
     else if (!strcmp(argv[pos], "-mc")) {
-      mc = atoi(argv[++pos]); 
+      mc = atoi(argv[++pos]);
       pos++;
       fprintf(stderr, "Using mc = %d\n", mc);
     }
@@ -309,7 +309,7 @@ int main(int argc, char **argv)
     }
     pointfile=stdin;
     break;
-    
+
   case 1: // one arg, interpret as file name
     pointfile = fopen(argv[pos], "r");
     i=fscanf(pointfile, "%d %d reals\n", &dim, &npoints);
@@ -318,13 +318,13 @@ int main(int argc, char **argv)
       exit(EXIT_FAILURE);
     }
     break;
-    
+
   case 2: // interpret as dim npoints args
     dim=atoi(argv[pos++]);
     npoints=atoi(argv[pos]);
     pointfile=stdin;
     break;
-    
+
   case 3: // interpret as dim npoints file; file not allowed to have header
     dim=atoi(argv[pos++]);
     npoints=atoi(argv[pos++]);
@@ -335,7 +335,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "Usage: calc_discr [dim npoints] [file]\n\nIf file not present, read from stdin. If dim, npoints not present, \nassume header '%%dim %%npoints reals' (e.g. '2 100 reals') in file.\n");
     exit(EXIT_FAILURE);
   }
-  
+
   fprintf(stderr, "Reading dim %d npoints %d\n", dim, npoints);
   pointset = malloc(npoints*sizeof(double*));
   for (i=0; i<npoints; i++) {
