@@ -68,11 +68,10 @@ void generate_neighbor_deltabardelta(int* xc_index, int* xn_pm_index, int* xn_ex
   generate_neighbor_bardelta(xn_pm_index, xn_extraminus_index, xc_index, k, mc);
 };
 
-double best_of_rounded_deltabardelta(int* xn_pm_index, int* xn_extraminus_index, int* xn_best_index) {
+double best_of_rounded_deltabardelta(int* xc_index, int* xn_pm_index, int* xn_extraminus_index, int* xn_best_index) {
   return best_of_rounded_bardelta(xn_pm_index, xn_extraminus_index, xn_best_index);
 }
 
-
-void generate_xc_deltabardelta(int* xn_pm_index, int* xn_extraminus_index) {
+void generate_xc_deltabardelta(int* xc_index, int* xn_pm_index, int* xn_extraminus_index) {
   generate_xc_bardelta(xn_pm_index, xn_extraminus_index);
 }

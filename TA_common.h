@@ -67,6 +67,6 @@ void update_points(double* fxc, double* current, int* xc_index, int* xn_pm_index
 
 void generate_neighbor_deltabardelta(int* xc_index, int* xn_pm_index, int* xn_extraminus_index, int* k, int mc);
 
-double best_of_rounded_deltabardelta(int* xn_pm_index, int* xn_extraminus_index, int* xn_best_index);
+double best_of_rounded_deltabardelta(int* xc_index, int* xn_pm_index, int* xn_extraminus_index, int* xn_best_index);
 
-void generate_xc_deltabardelta(int* xn_pm_index, int* xn_extraminus_index);
+void generate_xc_deltabardelta(int* xc_index, int* xn_pm_index, int* xn_extraminus_index);

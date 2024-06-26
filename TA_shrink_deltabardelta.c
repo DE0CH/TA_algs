@@ -128,10 +128,10 @@ double oldmain(double **pointset, int n, int d)
     mc = 2 + (int)(current_iteration / (innerloop * outerloop) * (d - 2));
 
     // draw a random initial point
-    generate_xc_deltabardelta(xc_index, xn_extraminus_index);
+    generate_xc_deltabardelta(xc_index, xn_pm_index, xn_extraminus_index);
 
     //(Possibly) Snap and compute the best of the rounded points and update current value
-    current = best_of_rounded_deltabardelta(xc_index, xn_extraminus_index, xn_best_index);
+    current = best_of_rounded_deltabardelta(xc_index, xn_pm_index, xn_extraminus_index, xn_best_index);
 
     global[t] = current;
 
@@ -161,7 +161,7 @@ double oldmain(double **pointset, int n, int d)
 
 
         //(Possibly) Snap the points and compute the best of the rounded points
-        fxc = best_of_rounded_deltabardelta(xn_pm_index, xn_extraminus_index, xn_best_index);
+        fxc = best_of_rounded_deltabardelta(xc_index, xn_pm_index, xn_extraminus_index, xn_best_index);
         // Global update if necessary
         if (fxc > global[t])
         {
