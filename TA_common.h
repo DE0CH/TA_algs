@@ -62,3 +62,11 @@ void generate_neighbor_delta(int *xn_plus_index,
 
 void generate_neighbor_bardelta(int *xn_minus_index, int *xn_extraminus_index,
 			int *xc_index, int *k, int mc);
+
+void update_points(double* fxc, double* current, int* xc_index, int* xn_pm_index, int* xn_extraminus_index, int* k, int mc);
+
+void generate_neighbor_deltabardelta(int* xc_index, int* xn_pm_index, int* xn_extraminus_index, int* k, int mc);
+
+double best_of_rounded_deltabardelta(int* xn_pm_index, int* xn_extraminus_index, int* xn_best_index);
+
+void generate_xc_deltabardelta(int* xn_pm_index, int* xn_extraminus_index);

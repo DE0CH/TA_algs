@@ -288,7 +288,7 @@ void snap_box(int *corner)
 //calculates delta(x)
 double get_delta(int *x)
 {
-  int i, op;
+  int op;
   double vol, delta;
   int n=n_points;
 
@@ -308,7 +308,7 @@ double get_delta(int *x)
 //calculates bar(delta)(x)
 double get_bar_delta(int *x)
 {
-  int i, cl;
+  int cl;
   int n=n_points;
   double vol, bdelta;
 

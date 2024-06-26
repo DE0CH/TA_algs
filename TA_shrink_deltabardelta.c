@@ -61,7 +61,6 @@ double oldmain(double **pointset, int n, int d)
   // xn_plus or minus index (depending on the context). For xn_extraminus_index, if we are only looking at the bardelta, just ignore it. 
   int xc_index[d], xn_pm_index[d], xn_extraminus_index[d];
   int xn_best_index[d]; // Indices of current point, neighbour
-  double xbest[d];
   double current, global[trials + 1], best, mean; // current and global best values
 
   int outerloop = i_tilde, innerloop = i_tilde;
@@ -193,8 +192,8 @@ double oldmain(double **pointset, int n, int d)
   } // trials
 
   // best calculated value
-  best = global[1];
-  for (t = 2; t <= trials; t++)
+  best = 0;
+  for (t = 1; t <= trials; t++)
   {
     if (global[t] > best)
     {
@@ -247,7 +246,10 @@ int main(int argc, char **argv)
   FILE *random;
   unsigned int seed;
   random = fopen("/dev/random", "rb");
-  fread(&seed, 4, 1, random);
+  if (fread(&seed, sizeof(int), 1, random) != 1) {
+    fprintf(stderr, "Could not read random seed\n");
+    exit(EXIT_FAILURE);
+  }
   srand(seed);
   while (pos < argc)
   {
@@ -327,8 +329,10 @@ int main(int argc, char **argv)
     pointset[i] = malloc(dim * sizeof(double));
     for (j = 0; j < dim; j++)
     {
-      fscanf(pointfile, "%lg ", &(pointset[i][j]));
-      // newline counts as whitespace
+      if (fscanf(pointfile, "%lg ", &(pointset[i][j])) == EOF) {
+        fprintf(stderr, "Unexpected EOF while reading the pointset file\n");
+        exit(EXIT_FAILURE);
+      };
     }
   }
   if (dim < mc)
