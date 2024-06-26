@@ -139,11 +139,9 @@ double oldmain(double **pointset, int n, int d)
     // Initialize iteration count
     current_iteration = 0;
 
-    // Generate threshold sequence   (only once)
-    //       fprintf(stderr, "Generating threshold\n");
+    // Generate threshold sequence
     for (i = 1; i <= outerloop; i++)
     {
-
       current_iteration++;
       // Update k-value
       for (j = 0; j < d; j++)

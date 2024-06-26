@@ -73,7 +73,7 @@ double oldmain(double **pointset, int n, int d)
   int i, j, p, t; // loop variables
 
   double thresh[i_tilde + 1]; // Thresholdsequence
-  double T;                   // current Threshold
+  double T;               // current Threshold
 
   double fxc;
   int xc_index[d], xn_plus_index[d];
@@ -81,7 +81,7 @@ double oldmain(double **pointset, int n, int d)
   double xbest[d];
   double current, global[trials + 1], best, mean; // current and global best values
 
-  const int outerloop = i_tilde, innerloop = i_tilde;
+  int outerloop = i_tilde, innerloop = i_tilde;
 
   int anzahl = 0;
   int switches[trials + 1];
@@ -89,7 +89,6 @@ double oldmain(double **pointset, int n, int d)
 
   // Get pointset from external file
   FILE *datei_ptr = stderr;
-  fprintf(datei_ptr, "GLP-Menge %d %d  ", d, n);
 
   // Sort the grid points, setup global variables
   process_coord_data(pointset, n, d);
@@ -97,8 +96,6 @@ double oldmain(double **pointset, int n, int d)
   // Algorithm starts here
   for (t = 1; t <= trials; t++)
   { // Initialization
-    fprintf(stderr, "Trial %d/%d\n", t, trials);
-
     // Initialize k-value
     for (j = 0; j < d; j++)
     {
