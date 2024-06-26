@@ -25,13 +25,6 @@
 #define MC 2
 #endif
 
-// not recommended: PRINT_ALL_UPDATES
-#define PRINT_ALL_UPDATES
-// even more ridiculous!
-// #define PRINT_UPDATE_CANDIDATES
-// #define DISPLAY_CANDIDATES
-// #define PRINT_RANGE_DATA
-
 // use THRESH_REPEAT=1 in "production code" (it only helps to denoise testing)
 #define THRESH_REPEAT 1
 
