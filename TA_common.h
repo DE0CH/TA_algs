@@ -1,31 +1,16 @@
-/* Contains common functions (= most) for TA discrepancy search */
-
-
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)<(b)?(a):(b))
-
-// not recommended: PRINT_ALL_UPDATES
-#define PRINT_ALL_UPDATES
-// even more ridiculous!
-//#define PRINT_UPDATE_CANDIDATES
-//#define DISPLAY_CANDIDATES
-//#define PRINT_RANGE_DATA
 
 extern int n_dimensions, n_points;
 extern double *n_coords;
 extern double **coord;
 extern int **point_index;
 
-// we want to use C library qsort to sort.  
+// we want to use C library qsort to sort.
 // I made a replacement stump
 void quicksort(int left, int right, double *arr);
 
-
 double get_coord(int d, int i);
-
-int get_index_up_lin(int d, double key);
-
-int get_index_down_lin(int d, double key);
 
 // The following functions use an "output variable" provided by the caller
 // (anything else would just mess up the C memory management)
@@ -69,11 +54,11 @@ void generate_xc_bardelta(int *xn_minus, int *xn_extraminus);
 //Generate a random neighbor of xc
 //k[i] == range radius in component i, mc = number of components to change
 //the three xn_* variables are filled with indexes
-void generate_neighbor (int *xn_plus_index, int *xn_minus_index, int *xn_extraminus_index, 
+void generate_neighbor (int *xn_plus_index, int *xn_minus_index, int *xn_extraminus_index,
 			int *xc_index, int *k, int mc);
 
-void generate_neighbor_delta(int *xn_plus_index, 
+void generate_neighbor_delta(int *xn_plus_index,
 			     int *xc_index, int *k, int mc);
 
-void generate_neighbor_bardelta(int *xn_minus_index, int *xn_extraminus_index, 
+void generate_neighbor_bardelta(int *xn_minus_index, int *xn_extraminus_index,
 			int *xc_index, int *k, int mc);
