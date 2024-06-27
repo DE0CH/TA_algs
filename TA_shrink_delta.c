@@ -80,7 +80,6 @@ double oldmain(struct grid *grid, double **pointset, int n, int d)
   double fxc;
   int xc_index[d], xn_plus_index[d];
   int xn_best_index[d]; // Indices of current point, neighbour
-  double xbest[d];
   double current, global[trials + 1], best, mean; // current and global best values
 
   int outerloop = i_tilde, innerloop = i_tilde;
