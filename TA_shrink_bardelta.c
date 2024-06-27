@@ -24,33 +24,21 @@
 #ifndef MC
 #define MC 2
 #endif
-
-// use THRESH_REPEAT=1 in "production code" (it only helps to denoise testing)
-#define THRESH_REPEAT 1
-
-int k_div = 0; // "0" means default "4 or 8" setup, other value (from main(), e.g. -k 16) overrides
-
 #define I_TILDE 316 // thresholds to be calculated (sqrt(iterations)), default value 100k
-int mc = MC;        // nbr of coordinates to be changed, default value
-int i_tilde = I_TILDE;
 #define TRIALS 1 // nbr of runs (mean and max will be calculated), default value
-int trials = TRIALS;
 
 // global variables to store info about pointset
 
 // global variables to store info about worst box (also "private")
-double real_max_discr = 0;
-int real_when = 0, when = 0;
-int current_iteration;
 
-struct grid grid;
+
+
 // Computes the best of the rounded points -- basic version
 // Constant neighbourhood size and mc-values.
 // Does not split the search.
 // Copies the appropriate "thing" into xc_index (output variable)
 double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extraminus, int *xc_index)
 {
-  double fxn_minus;
   double fxn_extraminus;
   double fxc;
   int j, d = grid->n_dimensions;
@@ -99,7 +87,7 @@ double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extram
   return fxc;
 }
 
-double oldmain(struct grid *grid, double **pointset, int n, int d)
+double oldmain(struct grid *grid, double **pointset, int n, int d, int mc, int i_tilde, int trials)
 {
   int k[d], start[d];
 
@@ -111,7 +99,6 @@ double oldmain(struct grid *grid, double **pointset, int n, int d)
   double fxc;
   int xc_index[d], xn_minus_index[d], xn_extraminus_index[d];
   int xn_best_index[d]; // Indices of current point, neighbour
-  double xbest[d];
   double current, global[trials + 1], best, mean; // current and global best values
 
   int outerloop = i_tilde, innerloop = i_tilde;
@@ -138,7 +125,7 @@ double oldmain(struct grid *grid, double **pointset, int n, int d)
     mc = 2;
 
     // Initialize iteration count
-    current_iteration = 0;
+    int current_iteration = 0;
 
     // Generate threshold sequence
     for (i = 1; i <= outerloop; i++)
@@ -176,17 +163,12 @@ double oldmain(struct grid *grid, double **pointset, int n, int d)
     global_switches[t] = 0;
     current = 0;
     global[t] = 0;
-    when = 0;
-    real_when = 0;
-    real_max_discr = 0;
 
     // Initialize k-value
     for (j = 0; j < d; j++)
     {
       start[j] = (int)((grid->n_coords[j] - 1) / 2);
     }
-    // Initialize mc-value
-    mc = 2 + (int)(current_iteration / (innerloop * outerloop) * (d - 2));
 
     // draw a random initial point
     generate_xc_bardelta(grid, xn_minus_index, xn_extraminus_index);
@@ -227,7 +209,6 @@ double oldmain(struct grid *grid, double **pointset, int n, int d)
         {
           global_switches[t]++;
           global[t] = fxc;
-          when = current_iteration;
         }
         // Update of current best value if necessary
         if (fxc - current >= T)
@@ -241,19 +222,12 @@ double oldmain(struct grid *grid, double **pointset, int n, int d)
         }
       } // innerloop
     } // outerloop
-    if (real_max_discr > global[t])
-    {
-      global[t] = real_max_discr;
-      when = real_when;
-      //	fprintf(stderr, "Max value subsumed\n");
-    }
-    fprintf(stderr, "Result %g at %d\n", global[t], when);
     fprintf(stdout, "%g\n", global[t]); // To simplify post-execution bookkeeping
   } // trials
 
   // best calculated value
-  best = global[1];
-  for (t = 2; t <= trials; t++)
+  best = 0;
+  for (t = 1; t <= trials; t++)
   {
     if (global[t] > best)
     {
@@ -298,6 +272,10 @@ double oldmain(struct grid *grid, double **pointset, int n, int d)
 
 int main(int argc, char **argv)
 {
+  struct grid grid;
+  int mc = MC;
+  int i_tilde = I_TILDE;
+  int trials = TRIALS;
   int dim, npoints, i, j;
   FILE *pointfile;
   double **pointset;
@@ -306,17 +284,14 @@ int main(int argc, char **argv)
   FILE *random;
   unsigned int seed;
   random = fopen("/dev/random", "rb");
-  fread(&seed, 4, 1, random);
+  if (fread(&seed, sizeof(int), 1, random) != 1) {
+    fprintf(stderr, "Could not read random seed\n");
+    exit(EXIT_FAILURE);
+  }
   srand(seed);
   while (pos < argc)
   {
-    if (!strcmp(argv[pos], "-kdiv"))
-    {
-      k_div = atoi(argv[++pos]);
-      pos++;
-      fprintf(stderr, "Using k = n/%d\n", k_div);
-    }
-    else if (!strcmp(argv[pos], "-mc"))
+    if (!strcmp(argv[pos], "-mc"))
     {
       mc = atoi(argv[++pos]);
       pos++;
@@ -335,7 +310,6 @@ int main(int argc, char **argv)
       pos++;
       fprintf(stderr, "Doing %d independent trials (currently: times ten thresh. rep.)\n",
               trials);
-      trials *= THRESH_REPEAT;
     }
     else
       break;
@@ -386,13 +360,16 @@ int main(int argc, char **argv)
     pointset[i] = malloc(dim * sizeof(double));
     for (j = 0; j < dim; j++)
     {
-      fscanf(pointfile, "%lg ", &(pointset[i][j]));
+      if (fscanf(pointfile, "%lg ", &(pointset[i][j])) == EOF) {
+        fprintf(stderr, "Unexpected EOF when reading the pointfile\n");
+        exit(EXIT_FAILURE);
+      }
       // newline counts as whitespace
     }
   }
   if (dim < mc)
     mc = dim;
   fprintf(stderr, "Calling Carola calculation\n");
-  printf("%g\n", oldmain(&grid, pointset, npoints, dim));
+  printf("%g\n", oldmain(&grid, pointset, npoints, dim, mc, i_tilde, trials));
   return EXIT_SUCCESS;
 }
