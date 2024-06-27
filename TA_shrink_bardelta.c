@@ -28,7 +28,6 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
   double thresh[i_tilde + 1]; // Thresholdsequence
   double T;               // current Threshold
 
-  double fxc;
   int xc_index[d], xn_minus_index[d], xn_extraminus_index[d];
   int xn_best_index[d]; // Indices of current point, neighbour
   double current, global[trials + 1], best; // current and global best values
@@ -63,7 +62,7 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
       generate_neighbor_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index, kmc.k, kmc.mc);
 
       // Compute the threshold
-      fxc = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index);
+      double fxc = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index);
       thresh[i] = 0.0 - fabs(fxc - current);
     }
 
@@ -97,21 +96,12 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
         generate_neighbor_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index, kmc.k, kmc.mc);
 
         //(Possibly) Snap the points and compute the best of the rounded points
-        fxc = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xn_best_index);
-        // Global update if necessary
+        double fxc = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xn_best_index);
         if (fxc > global[t])
         {
           global[t] = fxc;
         }
-        // Update of current best value if necessary
-        if (fxc - current >= T)
-        {
-          current = fxc;
-          for (j = 0; j < d; j++)
-          {
-            xc_index[j] = xn_best_index[j];
-          }
-        }
+        ta_update_point(fxc, &current, T, xc_index, xn_best_index, d);
       } // innerloop
     } // outerloop
   } // trials

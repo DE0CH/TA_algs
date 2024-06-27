@@ -661,3 +661,15 @@ void get_kmc(struct grid *grid, struct kmc *kmc, int current_iteration, int tota
   // Update mc-value
   kmc->mc = 2 + (int)(current_iteration / total_iteration * (grid->n_dimensions - 2));
 }
+
+void ta_update_point(double fxc, double *current, double T, int *xc_index, int *xn_best_index, int d) {
+  // Update of current best value if necessary
+  if (fxc - *current >= T)
+  {
+    *current = fxc;
+    for (int j = 0; j < d; j++)
+    {
+      xc_index[j] = xn_best_index[j];
+    }
+  }
+}
