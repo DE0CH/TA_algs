@@ -43,30 +43,32 @@ double real_max_discr = 0;
 int real_when = 0, when = 0;
 int current_iteration;
 
+struct grid grid;
+
 // Computes the best of the rounded points -- basic version
 // Constant neighbourhood size and mc-values.
 // Does not split the search.
 // Copies the appropriate "thing" into xc_index (output variable)
-double best_of_rounded_delta(int *xn_plus)
+double best_of_rounded_delta(struct grid *grid, int *xn_plus)
 {
   double fxc;
-  int j, d = n_dimensions;
+  int j, d = grid->n_dimensions;
   int xn_plus_grow[d];
 
   // Growing, shrinking.
   // Grower, shrinker that copy the point
   for (j = 0; j < d; j++)
     xn_plus_grow[j] = xn_plus[j];
-  grow_box_randomly(xn_plus_grow);
+  grow_box_randomly(grid, xn_plus_grow);
 
   // Now, create the official numbers.
   // official update from modified points
-  fxc = get_delta(xn_plus_grow);
+  fxc = get_delta(grid, xn_plus_grow);
 
   return fxc;
 }
 
-double oldmain(double **pointset, int n, int d)
+double oldmain(struct grid *grid, double **pointset, int n, int d)
 {
   int k[d], start[d];
 
@@ -91,7 +93,7 @@ double oldmain(double **pointset, int n, int d)
   FILE *datei_ptr = stderr;
 
   // Sort the grid points, setup global variables
-  process_coord_data(pointset, n, d);
+  process_coord_data(grid, pointset, n, d);
 
   // Algorithm starts here
   for (t = 1; t <= trials; t++)
@@ -99,7 +101,7 @@ double oldmain(double **pointset, int n, int d)
     // Initialize k-value
     for (j = 0; j < d; j++)
     {
-      start[j] = (int)((n_coords[j] - 1) / 2);
+      start[j] = (int)((grid->n_coords[j] - 1) / 2);
     }
     // Initialize mc-value
     mc = 2;
@@ -123,16 +125,16 @@ double oldmain(double **pointset, int n, int d)
       mc = 2 + (int)(current_iteration / outerloop * (d - 2));
 
       // generation of random point xc
-      generate_xc_delta(xc_index);
+      generate_xc_delta(grid, xc_index);
 
       //(Possibly) Snaps the point upwards and computes the fitness
-      current = best_of_rounded_delta(xc_index);
+      current = best_of_rounded_delta(grid, xc_index);
 
       // draw a neighbour of xc
-      generate_neighbor_delta(xn_plus_index, xc_index, k, mc);
+      generate_neighbor_delta(grid, xn_plus_index, xc_index, k, mc);
 
       // Compute the threshold
-      fxc = best_of_rounded_delta(xn_plus_index);
+      fxc = best_of_rounded_delta(grid, xn_plus_index);
       thresh[i] = 0.0 - fabs(fxc - current);
     }
 
@@ -150,16 +152,16 @@ double oldmain(double **pointset, int n, int d)
     // Initialize k-value
     for (j = 0; j < d; j++)
     {
-      start[j] = (int)((n_coords[j] - 1) / 2);
+      start[j] = (int)((grid->n_coords[j] - 1) / 2);
     }
     // Initialize mc-value
     mc = 2 + (int)(current_iteration / (innerloop * outerloop) * (d - 2));
 
     // draw a random initial point
-    generate_xc_delta(xc_index);
+    generate_xc_delta(grid, xc_index);
 
     //(Possibly) Snap and compute the best of the rounded points and update current value
-    current = best_of_rounded_delta(xc_index);
+    current = best_of_rounded_delta(grid, xc_index);
 
     global[t] = current;
 
@@ -185,10 +187,10 @@ double oldmain(double **pointset, int n, int d)
         // mc=2;
 
         // Get random neighbor
-        generate_neighbor_delta(xn_plus_index, xc_index, k, mc);
+        generate_neighbor_delta(grid, xn_plus_index, xc_index, k, mc);
 
         //(Possibly) Snap the points and compute the best of the rounded points
-        fxc = best_of_rounded_delta(xn_plus_index);
+        fxc = best_of_rounded_delta(grid, xn_plus_index);
         // Global update if necessary
         if (fxc > global[t])
         {
@@ -360,6 +362,6 @@ int main(int argc, char **argv)
   if (dim < mc)
     mc = dim;
   fprintf(stderr, "Calling Carola calculation\n");
-  printf("%g\n", oldmain(pointset, npoints, dim));
+  printf("%g\n", oldmain(&grid, pointset, npoints, dim));
   return EXIT_SUCCESS;
 }

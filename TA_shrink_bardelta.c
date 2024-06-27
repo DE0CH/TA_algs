@@ -43,16 +43,17 @@ double real_max_discr = 0;
 int real_when = 0, when = 0;
 int current_iteration;
 
+struct grid grid;
 // Computes the best of the rounded points -- basic version
 // Constant neighbourhood size and mc-values.
 // Does not split the search.
 // Copies the appropriate "thing" into xc_index (output variable)
-double best_of_rounded_bardelta(int *xn_minus, int *xn_extraminus, int *xc_index)
+double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extraminus, int *xc_index)
 {
   double fxn_minus;
   double fxn_extraminus;
   double fxc;
-  int j, d = n_dimensions;
+  int j, d = grid->n_dimensions;
   int use_extraminus = 0;
   int xn_minus_snap[d], xn_extraminus_snap[d];
   for (j = 0; j < d; j++)
@@ -66,20 +67,20 @@ double best_of_rounded_bardelta(int *xn_minus, int *xn_extraminus, int *xc_index
   // Grower, shrinker that copy the point
   for (j = 0; j < d; j++)
     xn_minus_snap[j] = xn_minus[j];
-  snap_box(xn_minus_snap);
+  snap_box(grid, xn_minus_snap);
   if (use_extraminus)
   {
     for (j = 0; j < d; j++)
       xn_extraminus_snap[j] = xn_extraminus[j];
-    snap_box(xn_extraminus_snap);
+    snap_box(grid, xn_extraminus_snap);
   }
 
   // Now, create the official numbers.
   // official update from modified points
-  fxc = get_bar_delta(xn_minus_snap);
+  fxc = get_bar_delta(grid, xn_minus_snap);
   if (use_extraminus)
   {
-    fxn_extraminus = get_bar_delta(xn_extraminus_snap);
+    fxn_extraminus = get_bar_delta(grid, xn_extraminus_snap);
     fxc = max(fxc, fxn_extraminus);
   }
 
@@ -98,7 +99,7 @@ double best_of_rounded_bardelta(int *xn_minus, int *xn_extraminus, int *xc_index
   return fxc;
 }
 
-double oldmain(double **pointset, int n, int d)
+double oldmain(struct grid *grid, double **pointset, int n, int d)
 {
   int k[d], start[d];
 
@@ -123,7 +124,7 @@ double oldmain(double **pointset, int n, int d)
   FILE *datei_ptr = stderr;
 
   // Sort the grid points, setup global variables
-  process_coord_data(pointset, n, d);
+  process_coord_data(grid, pointset, n, d);
 
   // Algorithm starts here
   for (t = 1; t <= trials; t++)
@@ -131,7 +132,7 @@ double oldmain(double **pointset, int n, int d)
     // Initialize k-value
     for (j = 0; j < d; j++)
     {
-      start[j] = (int)((n_coords[j] - 1) / 2);
+      start[j] = (int)((grid->n_coords[j] - 1) / 2);
     }
     // Initialize mc-value
     mc = 2;
@@ -155,16 +156,16 @@ double oldmain(double **pointset, int n, int d)
       mc = 2 + (int)(current_iteration / outerloop * (d - 2));
 
       // generation of random point xc
-      generate_xc_bardelta(xn_minus_index, xn_extraminus_index);
+      generate_xc_bardelta(grid, xn_minus_index, xn_extraminus_index);
 
       //(Possibly) Snap the points and compute the largest of the rounded values
-      current = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
+      current = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index);
 
       // draw a neighbour of xc
-      generate_neighbor_bardelta(xn_minus_index, xn_extraminus_index, xc_index, k, mc);
+      generate_neighbor_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index, k, mc);
 
       // Compute the threshold
-      fxc = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
+      fxc = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index);
       thresh[i] = 0.0 - fabs(fxc - current);
     }
 
@@ -182,16 +183,16 @@ double oldmain(double **pointset, int n, int d)
     // Initialize k-value
     for (j = 0; j < d; j++)
     {
-      start[j] = (int)((n_coords[j] - 1) / 2);
+      start[j] = (int)((grid->n_coords[j] - 1) / 2);
     }
     // Initialize mc-value
     mc = 2 + (int)(current_iteration / (innerloop * outerloop) * (d - 2));
 
     // draw a random initial point
-    generate_xc_bardelta(xn_minus_index, xn_extraminus_index);
+    generate_xc_bardelta(grid, xn_minus_index, xn_extraminus_index);
 
     //(Possibly) Snap and compute the best of the rounded points and update current value
-    current = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xc_index);
+    current = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index);
 
     global[t] = current;
 
@@ -217,10 +218,10 @@ double oldmain(double **pointset, int n, int d)
         // mc=2;
 
         // Get random neighbor
-        generate_neighbor_bardelta(xn_minus_index, xn_extraminus_index, xc_index, k, mc);
+        generate_neighbor_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index, k, mc);
 
         //(Possibly) Snap the points and compute the best of the rounded points
-        fxc = best_of_rounded_bardelta(xn_minus_index, xn_extraminus_index, xn_best_index);
+        fxc = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xn_best_index);
         // Global update if necessary
         if (fxc > global[t])
         {
@@ -392,6 +393,6 @@ int main(int argc, char **argv)
   if (dim < mc)
     mc = dim;
   fprintf(stderr, "Calling Carola calculation\n");
-  printf("%g\n", oldmain(pointset, npoints, dim));
+  printf("%g\n", oldmain(&grid, pointset, npoints, dim));
   return EXIT_SUCCESS;
 }
