@@ -647,3 +647,17 @@ void read_points(int argc, char *argv[], struct initial_params *param) {
   if (param->dim < param->mc)
     param->mc = param->dim;
 }
+
+void get_kmc(struct grid *grid, struct kmc *kmc, int current_iteration, int total_iteration) {
+  // Update k-value
+  for (int j = 0; j < grid->n_dimensions; j++)
+  {
+    int start = (int)((grid->n_coords[j] - 1) / 2);
+    kmc->k[j] = start * (((double)total_iteration - current_iteration) / (total_iteration)) +
+            1 * ((double)current_iteration / (total_iteration));
+    //	    k[j]=start[j] - (int)((3.0/4)*(current_iteration/outerloop)*(start[j]-1));
+  }
+
+  // Update mc-value
+  kmc->mc = 2 + (int)(current_iteration / total_iteration * (grid->n_dimensions - 2));
+}

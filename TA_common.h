@@ -20,6 +20,11 @@ struct initial_params {
 	int trials;
 };
 
+struct kmc {
+	int *k;
+	int mc;
+};
+
 // we want to use C library qsort to sort.
 // I made a replacement stump
 void quicksort(int left, int right, double *arr);
@@ -80,3 +85,5 @@ void generate_neighbor_bardelta(struct grid *grid, int *xn_minus_index, int *xn_
 double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extraminus, int *xc_index);
 
 void read_points(int argc, char *argv[], struct initial_params *param);
+
+void get_kmc(struct grid *grid, struct kmc *kmc, int current_iteration, int total_iteration);
