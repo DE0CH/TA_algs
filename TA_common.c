@@ -14,6 +14,12 @@
 
 // for stupid speedup reasons (alternative: make it static, and take care of initialization somehow)
 
+#ifndef MC
+#define MC 2
+#endif
+#define I_TILDE 316 // thresholds to be calculated (sqrt(iterations)), default value 100k
+#define TRIALS 1 // nbr of runs (mean and max will be calculated), default value
+
 
 // we want to use C library qsort to sort.
 // I made a replacement stump
@@ -489,4 +495,155 @@ void generate_neighbor_bardelta(struct grid *grid, int *xn_minus_index, int *xn_
 
   round_point_down(grid, xn, xn_minus_index);
   round_point_extradown(grid, xn, xn_extraminus_index);
+}
+
+// Computes the best of the rounded points -- basic version
+// Constant neighbourhood size and mc-values.
+// Does not split the search.
+// Copies the appropriate "thing" into xc_index (output variable)
+double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extraminus, int *xc_index)
+{
+  double fxn_extraminus;
+  double fxc;
+  int j, d = grid->n_dimensions;
+  int use_extraminus = 0;
+  int xn_minus_snap[d], xn_extraminus_snap[d];
+  for (j = 0; j < d; j++)
+    if (xn_minus[j] != xn_extraminus[j])
+    {
+      use_extraminus = 1;
+      break;
+    }
+
+  // Growing, shrinking.
+  // Grower, shrinker that copy the point
+  for (j = 0; j < d; j++)
+    xn_minus_snap[j] = xn_minus[j];
+  snap_box(grid, xn_minus_snap);
+  if (use_extraminus)
+  {
+    for (j = 0; j < d; j++)
+      xn_extraminus_snap[j] = xn_extraminus[j];
+    snap_box(grid, xn_extraminus_snap);
+  }
+
+  // Now, create the official numbers.
+  // official update from modified points
+  fxc = get_bar_delta(grid, xn_minus_snap);
+  if (use_extraminus)
+  {
+    fxn_extraminus = get_bar_delta(grid, xn_extraminus_snap);
+    fxc = max(fxc, fxn_extraminus);
+  }
+
+  // Remains only to copy the winning point to output variable xc_index.
+  if (use_extraminus && (fxn_extraminus >= fxc))
+  {
+    for (j = 0; j < d; j++)
+      xc_index[j] = xn_extraminus[j];
+  }
+  else
+  {
+    for (j = 0; j < d; j++)
+      xc_index[j] = xn_minus[j];
+  }
+
+  return fxc;
+}
+
+void read_points(int argc, char *argv[], struct initial_params *param) {
+  param->mc = MC;
+  param->i_tilde = I_TILDE;
+  param->trials = TRIALS;
+  FILE *pointfile;
+  int pos = 1;
+
+  FILE *random;
+  unsigned int seed;
+  random = fopen("/dev/random", "rb");
+  if (fread(&seed, sizeof(int), 1, random) != 1) {
+    fprintf(stderr, "Could not read random seed\n");
+    exit(EXIT_FAILURE);
+  }
+  srand(seed);
+  while (pos < argc)
+  {
+    if (!strcmp(argv[pos], "-mc"))
+    {
+      param->mc = atoi(argv[++pos]);
+      pos++;
+      fprintf(stderr, "Using mc = %d\n", param->mc);
+    }
+    else if (!strcmp(argv[pos], "-iter"))
+    {
+      param->i_tilde = (int)sqrt(atoi(argv[++pos]));
+      pos++;
+      fprintf(stderr, "Using %d iterations (adj. for sqrt)\n",
+              param->i_tilde * param->i_tilde);
+    }
+    else if (!strcmp(argv[pos], "-trials"))
+    {
+      param->trials = atoi(argv[++pos]);
+      pos++;
+      fprintf(stderr, "Doing %d independent trials (currently: times ten thresh. rep.)\n",
+              param->trials);
+    }
+    else
+      break;
+  }
+  switch (argc - pos)
+  {
+  case 0:
+    int i = scanf("%d %d reals\n", &param->dim, &param->npoints);
+    if (i != 2)
+    {
+      fprintf(stderr, "stdin mode and header line not present\n");
+      exit(EXIT_FAILURE);
+    }
+    pointfile = stdin;
+    break;
+
+  case 1: // one arg, interpret as file name
+    pointfile = fopen(argv[pos], "r");
+    i = fscanf(pointfile, "%d %d reals\n", &param->dim, &param->npoints);
+    if (i != 2)
+    {
+      fprintf(stderr, "stdin mode and header line not present\n");
+      exit(EXIT_FAILURE);
+    }
+    break;
+
+  case 2: // interpret as dim npoints args
+    param->dim = atoi(argv[pos++]);
+    param->npoints = atoi(argv[pos]);
+    pointfile = stdin;
+    break;
+
+  case 3: // interpret as dim npoints file; file not allowed to have header
+    param->dim = atoi(argv[pos++]);
+    param->npoints = atoi(argv[pos++]);
+    pointfile = fopen(argv[pos], "r");
+    break;
+
+  default:
+    fprintf(stderr, "Usage: calc_discr [dim npoints] [file]\n\nIf file not present, read from stdin. If dim, npoints not present, \nassume header '%%dim %%npoints reals' (e.g. '2 100 reals') in file.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  fprintf(stderr, "Reading dim %d npoints %d\n", param->dim, param->npoints);
+  param->pointset = malloc(param->npoints * sizeof(double *));
+  for (int i = 0; i < param->npoints; i++)
+  {
+    param->pointset[i] = malloc(param->dim * sizeof(double));
+    for (int j = 0; j < param->dim; j++)
+    {
+      if (fscanf(pointfile, "%lg ", &(param->pointset[i][j])) == EOF) {
+        fprintf(stderr, "Unexpected EOF when reading the pointfile\n");
+        exit(EXIT_FAILURE);
+      }
+      // newline counts as whitespace
+    }
+  }
+  if (param->dim < param->mc)
+    param->mc = param->dim;
 }

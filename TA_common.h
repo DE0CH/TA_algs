@@ -11,6 +11,15 @@ struct grid {
 	int *coordinate;
 };
 
+struct initial_params {
+	double **pointset;
+	int npoints;
+	int dim;
+	int mc;
+	int i_tilde;
+	int trials;
+};
+
 // we want to use C library qsort to sort.
 // I made a replacement stump
 void quicksort(int left, int right, double *arr);
@@ -67,3 +76,7 @@ void generate_neighbor_delta(struct grid *grid, int *xn_plus_index,
 
 void generate_neighbor_bardelta(struct grid *grid, int *xn_minus_index, int *xn_extraminus_index,
 			int *xc_index, int *k, int mc);
+
+double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extraminus, int *xc_index);
+
+void read_points(int argc, char *argv[], struct initial_params *param);

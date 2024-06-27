@@ -21,67 +21,6 @@
 
 #include "TA_common.h"
 
-
-// global variables to store info about pointset
-
-// global variables to store info about worst box (also "private")
-
-
-
-// Computes the best of the rounded points -- basic version
-// Constant neighbourhood size and mc-values.
-// Does not split the search.
-// Copies the appropriate "thing" into xc_index (output variable)
-double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extraminus, int *xc_index)
-{
-  double fxn_extraminus;
-  double fxc;
-  int j, d = grid->n_dimensions;
-  int use_extraminus = 0;
-  int xn_minus_snap[d], xn_extraminus_snap[d];
-  for (j = 0; j < d; j++)
-    if (xn_minus[j] != xn_extraminus[j])
-    {
-      use_extraminus = 1;
-      break;
-    }
-
-  // Growing, shrinking.
-  // Grower, shrinker that copy the point
-  for (j = 0; j < d; j++)
-    xn_minus_snap[j] = xn_minus[j];
-  snap_box(grid, xn_minus_snap);
-  if (use_extraminus)
-  {
-    for (j = 0; j < d; j++)
-      xn_extraminus_snap[j] = xn_extraminus[j];
-    snap_box(grid, xn_extraminus_snap);
-  }
-
-  // Now, create the official numbers.
-  // official update from modified points
-  fxc = get_bar_delta(grid, xn_minus_snap);
-  if (use_extraminus)
-  {
-    fxn_extraminus = get_bar_delta(grid, xn_extraminus_snap);
-    fxc = max(fxc, fxn_extraminus);
-  }
-
-  // Remains only to copy the winning point to output variable xc_index.
-  if (use_extraminus && (fxn_extraminus >= fxc))
-  {
-    for (j = 0; j < d; j++)
-      xc_index[j] = xn_extraminus[j];
-  }
-  else
-  {
-    for (j = 0; j < d; j++)
-      xc_index[j] = xn_minus[j];
-  }
-
-  return fxc;
-}
-
 double oldmain(struct grid *grid, double **pointset, int n, int d, int mc, int i_tilde, int trials)
 {
   int k[d], start[d];
@@ -213,7 +152,6 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int mc, int i
         }
       } // innerloop
     } // outerloop
-    fprintf(stdout, "%g\n", global[t]); // To simplify post-execution bookkeeping
   } // trials
 
   // best calculated value
