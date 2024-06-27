@@ -504,6 +504,29 @@ void generate_neighbor_bardelta(struct grid *grid, int *xn_minus_index, int *xn_
 // Constant neighbourhood size and mc-values.
 // Does not split the search.
 // Copies the appropriate "thing" into xc_index (output variable)
+double best_of_rounded_delta(struct grid *grid, int *xn_plus)
+{
+  double fxc;
+  int j, d = grid->n_dimensions;
+  int xn_plus_grow[d];
+
+  // Growing, shrinking.
+  // Grower, shrinker that copy the point
+  for (j = 0; j < d; j++)
+    xn_plus_grow[j] = xn_plus[j];
+  grow_box_randomly(grid, xn_plus_grow);
+
+  // Now, create the official numbers.
+  // official update from modified points
+  fxc = get_delta(grid, xn_plus_grow);
+
+  return fxc;
+}
+
+// Computes the best of the rounded points -- basic version
+// Constant neighbourhood size and mc-values.
+// Does not split the search.
+// Copies the appropriate "thing" into xc_index (output variable)
 double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extraminus, int *xc_index)
 {
   double fxn_extraminus;

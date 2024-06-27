@@ -24,7 +24,6 @@
 double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, int trials)
 {
   double thresh[i_tilde]; // Thresholdsequence
-  double T;               // current Threshold
 
   int xc_index[d], xn_minus_index[d], xn_extraminus_index[d];
   int xn_best_index[d]; // Indices of current point, neighbour
@@ -77,7 +76,7 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
 
     for (int i = 0; i < i_tilde; i++)
     {
-      T = thresh[i];
+      double T = thresh[i];
 
       for (int p = 0; p < i_tilde; p++)
       {

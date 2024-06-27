@@ -82,6 +82,8 @@ void generate_neighbor_delta(struct grid *grid, int *xn_plus_index,
 void generate_neighbor_bardelta(struct grid *grid, int *xn_minus_index, int *xn_extraminus_index,
 			int *xc_index, int *k, int mc);
 
+double best_of_rounded_delta(struct grid *grid, int *xn_plus);
+
 double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extraminus, int *xc_index);
 
 void read_points(int argc, char *argv[], struct initial_params *param);
