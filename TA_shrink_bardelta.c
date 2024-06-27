@@ -23,7 +23,7 @@
 
 double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, int trials)
 {
-  int i, j, p, t; // loop variables
+  int i, p, t; // loop variables
 
   double thresh[i_tilde + 1]; // Thresholdsequence
   double T;               // current Threshold
@@ -125,5 +125,7 @@ int main(int argc, char **argv)
   fprintf(stderr, "Calling Carola calculation\n");
   read_points(argc, argv, &param);
   printf("%g\n", oldmain(&grid, param.pointset, param.npoints, param.dim, param.i_tilde, param.trials));
+  free_initial_params(&param);
+  free_grid(&grid);
   return EXIT_SUCCESS;
 }

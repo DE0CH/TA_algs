@@ -86,6 +86,10 @@ double best_of_rounded_bardelta(struct grid *grid, int *xn_minus, int *xn_extram
 
 void read_points(int argc, char *argv[], struct initial_params *param);
 
+void free_initial_params(struct initial_params *param);
+
 void get_kmc(struct grid *grid, struct kmc *kmc, int current_iteration, int total_iteration);
 
 void ta_update_point(double fxc, double *current, double T, int *xc_index, int *xn_best_index, int d);
+
+void free_grid(struct grid *grid);

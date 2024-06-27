@@ -11,6 +11,9 @@
 
 #define max(a,b) ((a)>(b)?(a):(b))
 #define min(a,b) ((a)<(b)?(a):(b))
+#define TRUE 1
+#define FALSE 0
+typedef unsigned char bool;
 
 // for stupid speedup reasons (alternative: make it static, and take care of initialization somehow)
 
@@ -556,6 +559,7 @@ void read_points(int argc, char *argv[], struct initial_params *param) {
   param->i_tilde = I_TILDE;
   param->trials = TRIALS;
   FILE *pointfile;
+  bool should_close_pointfile = TRUE;
   int pos = 1;
 
   FILE *random;
@@ -565,6 +569,7 @@ void read_points(int argc, char *argv[], struct initial_params *param) {
     fprintf(stderr, "Could not read random seed\n");
     exit(EXIT_FAILURE);
   }
+  fclose(random);
   srand(seed);
   while (pos < argc)
   {
@@ -601,10 +606,16 @@ void read_points(int argc, char *argv[], struct initial_params *param) {
       exit(EXIT_FAILURE);
     }
     pointfile = stdin;
+    should_close_pointfile = FALSE;
     break;
 
   case 1: // one arg, interpret as file name
     pointfile = fopen(argv[pos], "r");
+    if (pointfile == NULL)
+    {
+      fprintf(stderr, "Could not open file %s\n", argv[pos]);
+      exit(EXIT_FAILURE);
+    }
     i = fscanf(pointfile, "%d %d reals\n", &param->dim, &param->npoints);
     if (i != 2)
     {
@@ -617,12 +628,18 @@ void read_points(int argc, char *argv[], struct initial_params *param) {
     param->dim = atoi(argv[pos++]);
     param->npoints = atoi(argv[pos]);
     pointfile = stdin;
+    should_close_pointfile = FALSE;
     break;
 
   case 3: // interpret as dim npoints file; file not allowed to have header
     param->dim = atoi(argv[pos++]);
     param->npoints = atoi(argv[pos++]);
     pointfile = fopen(argv[pos], "r");
+    if (pointfile == NULL)
+    {
+      fprintf(stderr, "Could not open file %s\n", argv[pos]);
+      exit(EXIT_FAILURE);
+    }
     break;
 
   default:
@@ -643,6 +660,9 @@ void read_points(int argc, char *argv[], struct initial_params *param) {
       }
       // newline counts as whitespace
     }
+  }
+  if (should_close_pointfile) {
+    fclose(pointfile);
   }
   if (param->dim < param->mc)
     param->mc = param->dim;
@@ -672,4 +692,27 @@ void ta_update_point(double fxc, double *current, double T, int *xc_index, int *
       xc_index[j] = xn_best_index[j];
     }
   }
+}
+
+void free_initial_params(struct initial_params *param) {
+  for (int i = 0; i < param->npoints; i++)
+  {
+    free(param->pointset[i]);
+  }
+  free(param->pointset);
+}
+
+void free_grid(struct grid *gird) {
+  for (int i = 0; i < gird->n_dimensions; i++)
+  {
+    free(gird->coord[i]);
+  }
+  free(gird->coord);
+  for (int i = 0; i < gird->n_points; i++)
+  {
+    free(gird->point_index[i]);
+  }
+  free(gird->point_index);
+  free(gird->n_coords);
+  free(gird->coordinate);
 }
