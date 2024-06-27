@@ -138,7 +138,7 @@ double oldmain(struct grid *grid, double **pointset, int n, int d)
     }
 
     // sort the thresholds in increasing order
-    quicksort(1, outerloop, thresh);
+    quicksort(1, outerloop + 1, thresh);
 
     switches[t] = 0;
     global_switches[t] = 0;

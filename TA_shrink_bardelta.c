@@ -23,35 +23,31 @@
 
 double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, int trials)
 {
-  int i, p, t; // loop variables
-
-  double thresh[i_tilde + 1]; // Thresholdsequence
+  double thresh[i_tilde]; // Thresholdsequence
   double T;               // current Threshold
 
   int xc_index[d], xn_minus_index[d], xn_extraminus_index[d];
   int xn_best_index[d]; // Indices of current point, neighbour
-  double current, global[trials + 1], best; // current and global best values
+  double current, global[trials], best; // current and global best values
   struct kmc kmc;
   int _k[d];
   kmc.k = _k;
-  int outerloop = i_tilde, innerloop = i_tilde;
 
   // Sort the grid points, setup global variables
   process_coord_data(grid, pointset, n, d);
 
   // Algorithm starts here
-  for (t = 1; t <= trials; t++)
+  for (int t = 0; t < trials; t++)
   { // Initialization
     // Initialize iteration count
-    int current_iteration = 0;
 
     // Generate threshold sequence
-    for (i = 1; i <= outerloop; i++)
+    for (int i = 0; i < i_tilde; i++)
     {
-      current_iteration++;
+      int current_iteration = i + 1;
       // Update k-value
       // Update mc-value
-      get_kmc(grid, &kmc, current_iteration, outerloop);
+      get_kmc(grid, &kmc, current_iteration, i_tilde);
       // generation of random point xc
       generate_xc_bardelta(grid, xn_minus_index, xn_extraminus_index);
 
@@ -67,7 +63,7 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
     }
 
     // sort the thresholds in increasing order
-    quicksort(1, outerloop, thresh);
+    quicksort(0, i_tilde, thresh);
 
     current = 0;
     global[t] = 0;
@@ -79,18 +75,17 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
 
     global[t] = current;
 
-    current_iteration = 0;
-    for (i = 1; i <= outerloop; i++)
+    for (int i = 0; i < i_tilde; i++)
     {
       T = thresh[i];
 
-      for (p = 1; p <= innerloop; p++)
+      for (int p = 0; p < i_tilde; p++)
       {
-        current_iteration++;
+        int current_iteration = i*i_tilde + p + 1;
 
         // Update k-value
         // Update mc-value
-        get_kmc(grid, &kmc, current_iteration, innerloop * outerloop);
+        get_kmc(grid, &kmc, current_iteration, i_tilde * i_tilde);
 
         // Get random neighbor
         generate_neighbor_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index, kmc.k, kmc.mc);
@@ -108,7 +103,7 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
 
   // best calculated value
   best = 0;
-  for (t = 1; t <= trials; t++)
+  for (int t = 0; t < trials; t++)
   {
     if (global[t] > best)
     {

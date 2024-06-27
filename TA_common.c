@@ -38,7 +38,7 @@ int dbl_compare(const void *a, const void *b)
 } // oops: "x-y" gets cast to integer, rounded wrong
 
 void quicksort(int left, int right, double *arr) {
-  qsort(&arr[left], right-left+1, sizeof(double), dbl_compare);
+  qsort(&arr[left], right-left, sizeof(double), dbl_compare);
 }
 
 double get_coord(struct grid *grid, int d, int i) {
@@ -107,7 +107,7 @@ void process_coord_data(struct grid *grid, double **points, int n, int d) {
       tmp_coords[j+1]=points[j][i];
     tmp_coords[0]=0.0;
     tmp_coords[n+1]=1.0;
-    quicksort(1, n, tmp_coords);
+    quicksort(1, n+1, tmp_coords);
     // 1. count
     n_uniq=1;
     prev_coord=0;
