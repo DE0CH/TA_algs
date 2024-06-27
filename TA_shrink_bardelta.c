@@ -37,9 +37,6 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int mc, int i
 
   int outerloop = i_tilde, innerloop = i_tilde;
 
-  int switches[trials + 1];
-  int global_switches[trials + 1];
-
   // Sort the grid points, setup global variables
   process_coord_data(grid, pointset, n, d);
 
@@ -89,8 +86,6 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int mc, int i
     // sort the thresholds in increasing order
     quicksort(1, outerloop, thresh);
 
-    switches[t] = 0;
-    global_switches[t] = 0;
     current = 0;
     global[t] = 0;
 
@@ -137,13 +132,11 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int mc, int i
         // Global update if necessary
         if (fxc > global[t])
         {
-          global_switches[t]++;
           global[t] = fxc;
         }
         // Update of current best value if necessary
         if (fxc - current >= T)
         {
-          switches[t]++;
           current = fxc;
           for (j = 0; j < d; j++)
           {
