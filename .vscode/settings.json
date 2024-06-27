@@ -1,7 +1,13 @@
 {
     "cSpell.words": [
         "bardelta",
+        "deltabardelta",
         "extradown",
+        "extraminus",
         "fastrand"
-    ]
+    ],
+    "files.associations": {
+        "stdio.h": "c",
+        "ta_common.h": "c"
+    }
 }
