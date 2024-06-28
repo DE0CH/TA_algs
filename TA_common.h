@@ -25,6 +25,12 @@ struct kmc {
 	int mc;
 };
 
+struct history {
+	int *history;
+	int len;
+	int d;
+};
+
 // we want to use C library qsort to sort.
 // I made a replacement stump
 void quicksort(int left, int right, double *arr);
@@ -95,3 +101,13 @@ void get_kmc(struct grid *grid, struct kmc *kmc, int current_iteration, int tota
 void ta_update_point(double fxc, double *current, double T, int *xc_index, int *xn_best_index, int d);
 
 void free_grid(struct grid *grid);
+
+struct history init_history(int d, int n);
+
+void record_history(struct history *history, int *corner);
+
+void free_history(struct history *history);
+
+void populate_random_search_points(int search_population, int d, double *search_points);
+
+void closest_point(struct grid *grid, struct history *history, int search_population, double *search_points, double *xc);

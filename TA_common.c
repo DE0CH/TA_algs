@@ -166,7 +166,7 @@ double volume(struct grid *grid, int *corner)
 int open(struct grid *grid, int *x, int *z)
 {
   int i;
-  for (i=0; i<grid->n_dimensions; i++)
+  for (i=0; i < grid->n_dimensions; i++)
     if (x[i] >= z[i])
       return 0;
   return 1;
@@ -738,4 +738,60 @@ void free_grid(struct grid *gird) {
   free(gird->point_index);
   free(gird->n_coords);
   free(gird->coordinate);
+}
+
+void record_history(struct history *h, int *xc) {
+  for (int i = 0; i < h->d; i++)
+  {
+    h->history[h->len * h->d + i] = xc[i];
+  }
+  h->len++;
+}
+
+void free_history(struct history *h) {
+  free(h->history);
+}
+
+struct history init_history(int d, int n) {
+  struct history h;
+  h.d = d;
+  h.len = 0;
+  h.history = malloc(d * n * sizeof(int));
+  return h;
+}
+
+double random_zo() {
+  return (double)rand() / (double)RAND_MAX;
+}
+
+void populate_random_search_points(int search_population, int d, double *search_points) {
+  for (int i = 0; i < search_population; i++)
+  {
+    for (int j = 0; j < d; j++)
+    {
+      search_points[i * d + j] = random_zo();
+    }
+  }
+}
+
+void closest_point(struct grid *grid, struct history *history, int search_population, double *search_points, double *xc) {
+  double min_dist = DBL_MAX;
+  int min_index = 0;
+  for (int i = 0; i < search_population; i++) {
+    for (int j = 0; j < history->len; j++) {
+      double dist = 0;
+      for (int k = 0; k < grid->n_dimensions; k++) {
+        int d = grid->n_dimensions;
+        double diff = fabs(grid->coord[k][history->history[j * d + k]] - search_points[i * d + k]);
+        dist = max(dist, diff);
+      }
+      if (dist < min_dist) {
+        min_dist = dist;
+        min_index = i;
+      }
+    }
+  }
+  for (int i = 0; i < grid->n_dimensions; i++) {
+    xc[i] = search_points[min_index * grid->n_dimensions + i];
+  }
 }

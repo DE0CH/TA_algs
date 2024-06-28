@@ -23,6 +23,7 @@
 
 double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, int trials)
 {
+  int search_population = 200;
   double thresh[i_tilde]; // Thresholdsequence
 
   int xc_index[d], xn_minus_index[d], xn_extraminus_index[d];
@@ -31,6 +32,9 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
   struct kmc kmc;
   int _k[d];
   kmc.k = _k;
+  struct history history = init_history(d, trials*i_tilde*i_tilde);
+  double search_points[search_population * d];
+  populate_random_search_points(search_population, d, search_points);
 
   // Sort the grid points, setup global variables
   process_coord_data(grid, pointset, n, d);
@@ -67,10 +71,18 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
     current = 0;
     global[t] = 0;
     // draw a random initial point
-    generate_xc_bardelta(grid, xn_minus_index, xn_extraminus_index);
+    if (t == 0) {
+      generate_xc_bardelta(grid, xn_minus_index, xn_extraminus_index);
+    } else {
+      double pp[d];
+      closest_point(grid, &history, search_population, search_points, pp);
+      round_point_down(grid, pp, xn_minus_index);
+      round_point_extradown(grid, pp, xn_extraminus_index);
+    }
+    
+    current = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index);
 
     //(Possibly) Snap and compute the best of the rounded points and update current value
-    current = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index);
 
     global[t] = current;
 
@@ -96,10 +108,12 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
           global[t] = fxc;
         }
         ta_update_point(fxc, &current, T, xc_index, xn_best_index, d);
+        record_history(&history, xn_best_index);
       } // innerloop
     } // outerloop
   } // trials
 
+  free_history(&history);
   // best calculated value
   best = 0;
   for (int t = 0; t < trials; t++)
