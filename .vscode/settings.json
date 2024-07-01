@@ -8,6 +8,8 @@
     ],
     "files.associations": {
         "stdio.h": "c",
-        "ta_common.h": "c"
+        "ta_common.h": "c",
+        "stdlib.h": "c",
+        "math.h": "c"
     }
 }

@@ -26,7 +26,7 @@ struct kmc {
 };
 
 struct history {
-	int *history;
+	double *history;
 	int len;
 	int d;
 };
@@ -104,10 +104,12 @@ void free_grid(struct grid *grid);
 
 struct history init_history(int d, int n);
 
-void record_history(struct history *history, int *corner);
+void record_history(struct grid *grid, struct history *h, int *corner);
+
+void record_history_raw(struct history *h, double *xc);
 
 void free_history(struct history *history);
 
 void populate_random_search_points(int search_population, int d, double *search_points);
 
-void closest_point(struct grid *grid, struct history *history, int search_population, double *search_points, double *xc);
+void furthest_point(struct history *history, int search_population, double *search_points, double *xc);

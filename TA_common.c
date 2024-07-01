@@ -740,7 +740,15 @@ void free_grid(struct grid *gird) {
   free(gird->coordinate);
 }
 
-void record_history(struct history *h, int *xc) {
+void record_history(struct grid *grid, struct history *h, int *xc) {
+  for (int i = 0; i < h->d; i++)
+  {
+    h->history[h->len * h->d + i] = grid->coord[i][xc[i]];
+  }
+  h->len++;
+}
+
+void record_history_raw(struct history *h, double *xc) {
   for (int i = 0; i < h->d; i++)
   {
     h->history[h->len * h->d + i] = xc[i];
@@ -756,7 +764,7 @@ struct history init_history(int d, int n) {
   struct history h;
   h.d = d;
   h.len = 0;
-  h.history = malloc(d * n * sizeof(int));
+  h.history = malloc(d * n * sizeof(double));
   return h;
 }
 
@@ -769,29 +777,32 @@ void populate_random_search_points(int search_population, int d, double *search_
   {
     for (int j = 0; j < d; j++)
     {
-      search_points[i * d + j] = random_zo();
+      double temp = random_zo();
+      search_points[i * d + j] = pow(temp,(double)((double)1/(double)d));
     }
   }
 }
 
-void closest_point(struct grid *grid, struct history *history, int search_population, double *search_points, double *xc) {
-  double min_dist = DBL_MAX;
-  int min_index = 0;
+void furthest_point(struct history *history, int search_population, double *search_points, double *xc) {
+  int d = history->d;
+  double ans = 0;
+  int ans_i = 0;
   for (int i = 0; i < search_population; i++) {
+    double min_dist = 1.0;
     for (int j = 0; j < history->len; j++) {
       double dist = 0;
-      for (int k = 0; k < grid->n_dimensions; k++) {
-        int d = grid->n_dimensions;
-        double diff = fabs(grid->coord[k][history->history[j * d + k]] - search_points[i * d + k]);
+      for (int k = 0; k < d; k++) {
+        double diff = fabs(history->history[j * d + k] - search_points[i * d + k]);
         dist = max(dist, diff);
       }
-      if (dist < min_dist) {
-        min_dist = dist;
-        min_index = i;
-      }
+      min_dist = min(min_dist, dist);
+    }
+    if (min_dist > ans) {
+      ans = min_dist;
+      ans_i = i;
     }
   }
-  for (int i = 0; i < grid->n_dimensions; i++) {
-    xc[i] = search_points[min_index * grid->n_dimensions + i];
+  for (int i = 0; i < d; i++) {
+    xc[i] = search_points[ans_i * d + i];
   }
 }

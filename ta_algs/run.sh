@@ -9,6 +9,6 @@ echo "N=$N, D=$D"
 
 
 make -C ../ 
-../TA_improved_delta -iter 100000 $D $N <(tail -n +2 $FILE)
-../TA_improved_bardelta -iter 100000 $D $N <(tail -n +2 $FILE)
+../TA_improved_bardelta_og -iter 100000 -trials 10 $D $N <(tail -n +2 $FILE)
+../TA_improved_bardelta -iter 100000 -trials 20 $D $N <(tail -n +2 $FILE)
 echo "Ground truth $GD"

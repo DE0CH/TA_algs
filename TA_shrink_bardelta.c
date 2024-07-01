@@ -32,7 +32,7 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
   struct kmc kmc;
   int _k[d];
   kmc.k = _k;
-  struct history history = init_history(d, trials*i_tilde*i_tilde);
+  struct history history = init_history(d, trials*i_tilde*i_tilde + trials);
   double search_points[search_population * d];
   populate_random_search_points(search_population, d, search_points);
 
@@ -74,12 +74,14 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
     if (t == 0) {
       generate_xc_bardelta(grid, xn_minus_index, xn_extraminus_index);
     } else {
+      // populate_random_search_points(search_population, d, search_points);
       double pp[d];
-      closest_point(grid, &history, search_population, search_points, pp);
+      furthest_point(&history, search_population, search_points, pp);
+      record_history_raw(&history, pp);
       round_point_down(grid, pp, xn_minus_index);
       round_point_extradown(grid, pp, xn_extraminus_index);
     }
-    
+
     current = best_of_rounded_bardelta(grid, xn_minus_index, xn_extraminus_index, xc_index);
 
     //(Possibly) Snap and compute the best of the rounded points and update current value
@@ -108,7 +110,7 @@ double oldmain(struct grid *grid, double **pointset, int n, int d, int i_tilde, 
           global[t] = fxc;
         }
         ta_update_point(fxc, &current, T, xc_index, xn_best_index, d);
-        record_history(&history, xn_best_index);
+        record_history(grid, &history, xn_best_index);
       } // innerloop
     } // outerloop
   } // trials
